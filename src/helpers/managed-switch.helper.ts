@@ -1,5 +1,5 @@
 import { CronExpression, TBlackHole, TContext } from "@digital-alchemy/core";
-import { PICK_ENTITY } from "@digital-alchemy/core/hass";
+import { PICK_ENTITY } from "@digital-alchemy/hass";
 
 export type PickASwitch =
   | PICK_ENTITY<"switch">

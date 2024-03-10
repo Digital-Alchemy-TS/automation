@@ -14,7 +14,7 @@ import {
   ENTITY_STATE,
   GenericEntityDTO,
   PICK_ENTITY,
-} from "@digital-alchemy/core/hass";
+} from "@digital-alchemy/hass";
 
 import { RoomDefinition } from "..";
 import {

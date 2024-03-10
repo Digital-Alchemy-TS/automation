@@ -1,5 +1,5 @@
-import { ALL_DOMAINS, GetDomain, PICK_ENTITY } from "../../hass";
-import { TContext } from "../../utilities";
+import { TContext } from "@digital-alchemy/core";
+import { ALL_DOMAINS, GetDomain, PICK_ENTITY } from "@digital-alchemy/hass";
 
 type SceneAwareDomains = "switch" | "light";
 type RGB = [r: number, g: number, b: number];

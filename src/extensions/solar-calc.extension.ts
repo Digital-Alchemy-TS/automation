@@ -5,7 +5,7 @@ import {
   TServiceParams,
   ZCC,
 } from "@digital-alchemy/core";
-import { HassConfig } from "@digital-alchemy/core/hass";
+import { HassConfig } from "@digital-alchemy/hass";
 import dayjs, { Dayjs } from "dayjs";
 import EventEmitter from "events";
 

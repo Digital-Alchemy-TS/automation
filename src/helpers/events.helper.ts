@@ -1,5 +1,5 @@
 import { TContext } from "@digital-alchemy/core";
-import { PICK_ENTITY } from "@digital-alchemy/core/hass";
+import { PICK_ENTITY } from "@digital-alchemy/hass";
 
 export const LOCATION_UPDATED = "LOCATION_UPDATED";
 

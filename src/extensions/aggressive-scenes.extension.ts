@@ -1,5 +1,5 @@
 import { each, is, TContext, TServiceParams } from "@digital-alchemy/core";
-import { domain, ENTITY_STATE, PICK_ENTITY } from "@digital-alchemy/core/hass";
+import { domain, ENTITY_STATE, PICK_ENTITY } from "@digital-alchemy/hass";
 
 import {
   AGGRESSIVE_SCENES_ADJUSTMENT,

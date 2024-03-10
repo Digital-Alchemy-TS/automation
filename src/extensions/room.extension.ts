@@ -5,12 +5,23 @@ import {
   is,
   TServiceParams,
   VALUE,
-  ZCC,
 } from "@digital-alchemy/core";
-import { PICK_ENTITY } from "@digital-alchemy/core/hass";
-import { VirtualSensor } from "@digital-alchemy/core/synapse";
+import { ALL_DOMAINS, PICK_ENTITY } from "@digital-alchemy/hass";
+import { VirtualSensor } from "@digital-alchemy/synapse";
 
 import { RoomConfiguration, RoomScene, SceneLightState } from "..";
+
+function toHassId<DOMAIN extends ALL_DOMAINS>(
+  domain: DOMAIN,
+  ...parts: string[]
+) {
+  const name = parts
+    .join(" ")
+    .toLowerCase()
+    .replaceAll(/\s+/g, "_")
+    .replaceAll(/\W/g, "");
+  return `${domain}.${name}` as PICK_ENTITY<DOMAIN>;
+}
 
 export type RoomDefinition<SCENES extends string = string> = {
   scene: SCENES;
@@ -46,7 +57,7 @@ export function Room({
     });
 
     function restoreFromEntity() {
-      const importedValue = hass.entity.byId(ZCC.toHassId("sensor", sensorName))
+      const importedValue = hass.entity.byId(toHassId("sensor", sensorName))
         .state as SCENES;
       const current = currentScene.state;
       if (is.empty(current) && !SCENE_LIST.includes(importedValue)) {
@@ -206,7 +217,7 @@ export function Room({
         }
         if (property === "sceneId") {
           return (scene: SCENES) => {
-            return ZCC.toHassId("scene", name, scene);
+            return toHassId("scene", name, scene);
           };
         }
         if (property === "currentSceneEntity") {
@@ -223,7 +234,7 @@ export function Room({
             async () =>
               // ? This way adds a network hop, allows hass to create a logbook entry for the call
               await hass.call.scene.turn_on({
-                entity_id: ZCC.toHassId("scene", name, value),
+                entity_id: toHassId("scene", name, value),
               }),
           );
           return true;
