@@ -88,7 +88,10 @@ export function LightManager({
       return;
     }
     if (entity.state === "unavailable") {
-      logger.warn({ entity_id }, `entity is unavailable, cannot manage state`);
+      logger.warn(
+        { entity_id, name: manageLight },
+        `entity is unavailable, cannot manage state`,
+      );
       return;
     }
     const performedUpdate = await matchToScene(entity, expected);
@@ -103,6 +106,7 @@ export function LightManager({
           const child = hass.entity.byId(child_id);
           if (!child) {
             logger.warn(
+              { name: manageLight },
               `%s => %s child entity of group cannot be found`,
               entity_id,
               child_id,
@@ -217,6 +221,7 @@ export function LightManager({
     logger.debug(
       {
         entity_id: entity.entity_id,
+        name: manageLightColor,
         reasons,
         rgb_color: state.rgb_color,
         type,
@@ -243,7 +248,7 @@ export function LightManager({
     const entity_id = entity.entity_id as PICK_ENTITY<"light">;
     if (expected.state === "off") {
       if (entity.state === "on") {
-        logger.debug({ entity_id }, `on => off`);
+        logger.debug({ entity_id, name: matchToScene }, `on => off`);
         await hass.call.light.turn_off({ entity_id });
         return true;
       }
@@ -313,7 +318,7 @@ export function LightManager({
     if (!config.automation.CIRCADIAN_ENABLED) {
       return;
     }
-    logger.debug(`setting up light adjustment cron`);
+    logger.debug({ name: "onPostConfig" }, `setting up light adjustment cron`);
     let earlyStop: () => void;
     scheduler.cron({
       exec: async () => {
@@ -325,7 +330,7 @@ export function LightManager({
         let complete = NONE;
         earlyStop = () => {
           logger.warn(
-            { complete, total: list.length },
+            { complete, name: "earlyStop", total: list.length },
             `light temperature adjustment not complete yet`,
           );
           stopped = true;
@@ -338,7 +343,11 @@ export function LightManager({
             if (stopped) {
               return;
             }
-            logger.trace({ diff, name: light }, `adjusting light temperature`);
+            logger.trace(
+              { diff, name: "onPostConfig" },
+              `{%s} adjusting light temperature`,
+              light,
+            );
             await hass.call.light.turn_on({
               entity_id: light,
               kelvin: automation.circadian.getKelvin(),

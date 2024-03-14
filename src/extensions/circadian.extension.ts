@@ -20,7 +20,7 @@ export function CircadianLighting({
 
   lifecycle.onPostConfig(() => {
     if (!config.automation.CIRCADIAN_ENABLED) {
-      logger.info(`circadian disabled`);
+      logger.info({ name: "onPostConfig" }, `circadian disabled`);
       return;
     }
     circadianEntity = synapse.sensor({
@@ -45,7 +45,7 @@ export function CircadianLighting({
       return;
     }
     if (!automation.solar.loaded) {
-      logger.debug(`lat/long not loaded yet`);
+      logger.debug({ name: updateKelvin }, `lat/long not loaded yet`);
       return;
     }
     const offset = getColorOffset();
@@ -65,7 +65,7 @@ export function CircadianLighting({
       return MIN;
     }
     if (!automation.solar.loaded) {
-      logger.debug(`lat/long not loaded yet`);
+      logger.debug({ name: getColorOffset }, `lat/long not loaded yet`);
       return MIN;
     }
     const now = dayjs();

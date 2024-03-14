@@ -36,7 +36,7 @@ export function AggressiveScenes({
     }
     if (entity.state === "unavailable") {
       logger.warn(
-        { name: entity_id },
+        { entity_id, name: manageSwitch },
         `{unavailable} entity, cannot manage state`,
       );
       return;
@@ -60,6 +60,7 @@ export function AggressiveScenes({
             const child = hass.entity.byId(child_id);
             if (!child) {
               logger.warn(
+                { name: manageSwitch },
                 `%s => %s child entity of group cannot be found`,
                 entity_id,
                 child_id,
@@ -68,7 +69,7 @@ export function AggressiveScenes({
             }
             if (child.state === "unavailable") {
               logger.warn(
-                { name: child_id },
+                { child_id, name: manageSwitch },
                 `{unavailable} entity, cannot manage state`,
               );
               return;
@@ -87,7 +88,10 @@ export function AggressiveScenes({
     expected: SceneSwitchState,
   ) {
     const entity_id = entity.entity_id;
-    logger.debug({ name: entity_id, state: expected.state }, `changing state`);
+    logger.debug(
+      { entity_id, name: matchSwitchToScene, state: expected.state },
+      `changing state`,
+    );
     event.emit(AGGRESSIVE_SCENES_ADJUSTMENT, {
       entity_id,
       type: "switch_on_off",
@@ -120,13 +124,17 @@ export function AggressiveScenes({
       return;
     }
     if (!scene?.definition) {
-      logger.warn({ context, name, room, scene }, `cannot validate room scene`);
+      logger.warn(
+        { context, name: validateRoomScene, room, scene },
+        `[%s] cannot validate room scene`,
+        name,
+      );
       return;
     }
     if (!is.object(scene.definition) || is.empty(scene.definition)) {
       // ? There currently is no use case for a scene with no entities in it
       // Not technically an error though
-      logger.warn("no definition");
+      logger.warn({ name: validateRoomScene, room: name }, "no definition");
       return;
     }
     const entities = Object.keys(scene.definition) as PICK_ENTITY[];
@@ -137,7 +145,10 @@ export function AggressiveScenes({
         // The wrong id was probably input
         //
         // ? This is distinct from "unavailable" entities
-        logger.error({ name: entity_id }, `cannot find entity`);
+        logger.error(
+          { entity_id, name: validateRoomScene },
+          `cannot find entity`,
+        );
         return;
       }
       const entityDomain = domain(entity_id);
@@ -155,7 +166,11 @@ export function AggressiveScenes({
           );
           return;
         default:
-          logger.debug({ name: entityDomain }, `no actions set for domain`);
+          logger.debug(
+            { name: validateRoomScene },
+            `{%s} no actions set for domain`,
+            entityDomain,
+          );
       }
     });
   }

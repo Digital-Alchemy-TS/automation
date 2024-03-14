@@ -20,7 +20,7 @@ export function ManagedSwitch({ logger, hass, scheduler }: TServiceParams) {
     // ? Bail out if no action can be taken
     if (hass.socket.connectionState !== "connected") {
       logger.warn(
-        { context },
+        { context, name: updateEntities },
         `skipping state enforce attempt, socket not available`,
       );
       return;
@@ -39,9 +39,9 @@ export function ManagedSwitch({ logger, hass, scheduler }: TServiceParams) {
     }
     // * Notify and execute!
     if (entity_id.length === SINGLE) {
-      logger.debug({ name: entity_id }, action);
+      logger.debug({ entity_id, name: updateEntities }, action);
     } else {
-      logger.debug({ action, entity_id });
+      logger.debug({ action, entity_id, name: updateEntities });
     }
     await hass.call.switch[action]({ entity_id });
   }
@@ -54,7 +54,10 @@ export function ManagedSwitch({ logger, hass, scheduler }: TServiceParams) {
     shouldBeOn,
     onUpdate = [],
   }: ManagedSwitchOptions) {
-    logger.trace({ context, entity_id }, `setting up managed switch`);
+    logger.trace(
+      { context, entity_id, name: ManageSwitch },
+      `setting up managed switch`,
+    );
     const entityList = is.array(entity_id) ? entity_id : [entity_id];
 
     // * Check if there should be a change
@@ -63,7 +66,7 @@ export function ManagedSwitch({ logger, hass, scheduler }: TServiceParams) {
       if (!is.boolean(expected)) {
         if (!is.undefined(expected)) {
           logger.error(
-            { context, entity_id, expected },
+            { context, entity_id, expected, name: ManageSwitch },
             `Invalid value from switch manage function`,
           );
           return;

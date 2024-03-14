@@ -29,7 +29,7 @@ export function SequenceWatcher({
       return;
     }
     if (!is.object(reset)) {
-      logger.error({ reset: data.reset }, `bad reset type`);
+      logger.error({ name: onMatch, reset: data.reset }, `bad reset type`);
       return;
     }
     const labels = new Set([reset.label].flat().filter(i => !is.empty(i)));
@@ -88,7 +88,10 @@ export function SequenceWatcher({
     MATCH extends string = string,
   >(data: SequenceWatchOptions<DATA, MATCH>) {
     const { exec, event_type, match, context, label, path, filter } = data;
-    logger.trace({ context }, `setting up sequence watcher`);
+    logger.trace(
+      { context, name: SequenceWatcher },
+      `setting up sequence watcher`,
+    );
     const id = counter.toString();
     counter++;
 
@@ -96,7 +99,10 @@ export function SequenceWatcher({
     let watcher = WATCHED_EVENTS.get(event_type);
     if (!watcher) {
       watcher = [];
-      logger.trace({ event_type }, `listening for socket event`);
+      logger.trace(
+        { event_type, name: SequenceWatcher },
+        `listening for socket event`,
+      );
       const remover = hass.socket.onEvent({
         context,
         event: event_type,
@@ -113,7 +119,10 @@ export function SequenceWatcher({
         context,
         event_type,
         exec: () => {
-          logger.trace({ context, label, match }, `sequence match trigger`);
+          logger.trace(
+            { context, label, match, name: SequenceWatcher },
+            `sequence match trigger`,
+          );
           setImmediate(
             async () =>
               await internal.safeExec({
@@ -140,7 +149,7 @@ export function SequenceWatcher({
       );
       if (is.empty(watcher)) {
         logger.debug(
-          { event_type },
+          { event_type, name: SequenceWatcher },
           `last watcher for event removed, cleaning up socket event listener`,
         );
         WATCHED_EVENTS.delete(event_type);
