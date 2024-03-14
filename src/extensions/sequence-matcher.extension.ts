@@ -1,4 +1,4 @@
-import { is, sleep, START, TServiceParams, ZCC } from "@digital-alchemy/core";
+import { is, sleep, START, TServiceParams } from "@digital-alchemy/core";
 
 import {
   ActiveWatcher,
@@ -10,7 +10,12 @@ import {
   TrackedOptions,
 } from "..";
 
-export function SequenceWatcher({ logger, hass, config }: TServiceParams) {
+export function SequenceWatcher({
+  logger,
+  hass,
+  config,
+  internal,
+}: TServiceParams) {
   const ACTIVE = new Map<object, ActiveWatcher>();
   const WATCHED_EVENTS = new Map<string, TrackedOptions[]>();
   const EVENT_REMOVAL = new Map<string, () => void>();
@@ -55,7 +60,7 @@ export function SequenceWatcher({ logger, hass, config }: TServiceParams) {
       }
 
       // * Grab the new value from the event, and add it on the list
-      const value = ZCC.utils.object.get(event_data, data.path) as string;
+      const value = internal.utils.object.get(event_data, data.path) as string;
       match.push(value);
 
       // * If the sequence matches, fire the callback
@@ -111,7 +116,7 @@ export function SequenceWatcher({ logger, hass, config }: TServiceParams) {
           logger.trace({ context, label, match }, `sequence match trigger`);
           setImmediate(
             async () =>
-              await ZCC.safeExec({
+              await internal.safeExec({
                 duration: SEQUENCE_MATCHER_EXECUTION_TIME,
                 errors: SEQUENCE_MATCHER_ERRORS,
                 exec: async () => await exec(),

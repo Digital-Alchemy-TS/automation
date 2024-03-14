@@ -3,7 +3,6 @@ import {
   TBlackHole,
   TContext,
   TServiceParams,
-  ZCC,
 } from "@digital-alchemy/core";
 import { HassConfig } from "@digital-alchemy/hass";
 import dayjs, { Dayjs } from "dayjs";
@@ -52,6 +51,7 @@ const UNLIMITED = 0;
 export function SolarCalculator({
   logger,
   cache,
+  internal,
   scheduler,
   hass,
   lifecycle,
@@ -194,7 +194,7 @@ export function SolarCalculator({
     exec,
   }: OnSolarEvent) => {
     event.on(eventName, async () => {
-      await ZCC.safeExec({
+      await internal.safeExec({
         duration: undefined,
         errors: undefined,
         exec: async () => await exec(),

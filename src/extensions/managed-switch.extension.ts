@@ -18,10 +18,10 @@ export function ManagedSwitch({ logger, hass, scheduler }: TServiceParams) {
     context: TContext,
   ): Promise<void> {
     // ? Bail out if no action can be taken
-    if (!hass.socket.getConnectionActive()) {
+    if (hass.socket.connectionState !== "connected") {
       logger.warn(
         { context },
-        `Skipping state enforce attempt, socket not available`,
+        `skipping state enforce attempt, socket not available`,
       );
       return;
     }
