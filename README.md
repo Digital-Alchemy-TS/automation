@@ -4,6 +4,8 @@ Welcome to `@digital-alchemy/automation`!
 
 This project builds on the utilities provided by `@digital-alchemy/hass` & `@digital-alchemy/synapse` to create home automation focused utilities for easily coordinating entities.
 
+> See the extended docs at: https://docs.digital-alchemy.app/02-Home-Automation/02.03-automation/
+
 ## 💾 Install
 
 You can install the custom component through HACS. See the repo for more detailed install instructions of the component: https://github.com/Digital-Alchemy-TS/synapse-extension
