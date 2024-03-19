@@ -5,6 +5,7 @@ Welcome to `@digital-alchemy/automation`!
 This project builds on the utilities provided by `@digital-alchemy/hass` & `@digital-alchemy/synapse` to create home automation focused utilities for easily coordinating entities.
 
 > See more at the [extended docs](https://docs.digital-alchemy.app/02-Home-Automation/02.03-automation/%F0%9F%A7%AD-Automation-Overview)
+> Ask questions on [Discord](https://discord.digital-alchemy.app)
 
 ## 💾 Install
 
@@ -14,6 +15,27 @@ This library can be installed as a simple dependency
 ```bash
 npm i @digital-alchemy/automation @digital-alchemy/synapse @digital-alchemy/hass
 ```
+
+Then added to your project
+
+```typescript
+import { LIB_AUTOMATION } from "@digital-alchemy/automation";
+import { LIB_HASS } from "@digital-alchemy/hass";
+import { LIB_SYNAPSE } from "@digital-alchemy/synapse";
+
+// application
+const MY_APP = CreateApplication({
+  libraries: [LIB_HASS, LIB_SYNAPSE, LIB_AUTOMATION],
+  name: "home_automation",
+})
+
+// library
+export const MY_LIBRARY = CreateLibrary({
+  depends: [LIB_HASS, LIB_SYNAPSE, LIB_AUTOMATION],
+  name: "special_logic",
+})
+```
+
 ## 🛠️ Utilities
 ### 🏠 Rooms w/ coordinated scenes
 

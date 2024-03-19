@@ -47,7 +47,7 @@ export function Utils() {
      * ## Usage Example
      *
      * ```typescript
-     * const [AM830, PM3, TOMORROW] = is.refTimes(["8:30", "15", "24"]);
+     * const [AM830, PM3, TOMORROW] = automation.utils.refTimes(["8:30", "15", "24"]);
      * const now = dayjs();
      * if (!now.isBetween(AM830, PM3)) {
      *   console.log(
@@ -71,7 +71,7 @@ export function Utils() {
      * ## Usage Example
      *
      * ```typescript
-     * const [NOW, AM830, PM3] = is.shortTime(["NOW", "AM8:30", "PM3", "24"]);
+     * const [NOW, AM830, PM3] = automation.utils.shortTime(["NOW", "AM8:30", "PM3"]);
      * if (!NOW.isBetween(AM830, PM3)) {
      *   console.log(
      *     `Not in range`,
