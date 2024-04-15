@@ -5,7 +5,7 @@ Welcome to `@digital-alchemy/automation`!
 This project builds on the utilities provided by `@digital-alchemy/hass` & `@digital-alchemy/synapse` to create home automation focused utilities for easily coordinating entities.
 
 - [Extended docs](https://docs.digital-alchemy.app/Automation)
-- [Discord](https://discord.com/invite/mtWHk36upW)
+- [Discord](https://discord.gg/JkZ35Gv97Y)
 
 ## 💾 Install
 
