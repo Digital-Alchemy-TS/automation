@@ -1,5 +1,11 @@
 import { each, is, TContext, TServiceParams } from "@digital-alchemy/core";
-import { domain, ENTITY_STATE, PICK_ENTITY } from "@digital-alchemy/hass";
+import {
+  domain,
+  ENTITY_STATE,
+  PICK_ENTITY,
+  PICK_FROM_AREA,
+  TAreaId,
+} from "@digital-alchemy/hass";
 
 import {
   AGGRESSIVE_SCENES_ADJUSTMENT,
@@ -9,11 +15,11 @@ import {
   SceneSwitchState,
 } from "../helpers";
 
-type TValidateOptions = {
+type TValidateOptions<ROOM extends TAreaId> = {
   context: TContext;
   room: string;
   name: string;
-  scene: RoomScene;
+  scene: RoomScene<ROOM>;
 };
 
 export function AggressiveScenes({
@@ -24,12 +30,14 @@ export function AggressiveScenes({
   automation,
 }: TServiceParams) {
   // eslint-disable-next-line sonarjs/cognitive-complexity
-  async function manageSwitch(
-    entity: ENTITY_STATE<PICK_ENTITY<"switch">>,
-    scene: SceneDefinition,
-  ) {
-    const entity_id = entity.entity_id as PICK_ENTITY<"switch">;
-    const expected = scene[entity_id] as SceneSwitchState;
+  async function manageSwitch<
+    ROOM extends TAreaId,
+    SCENE extends SceneDefinition<ROOM>,
+  >(entity: ENTITY_STATE<PICK_FROM_AREA<ROOM, "switch">>, scene: SCENE) {
+    const entity_id = entity.entity_id as PICK_FROM_AREA<ROOM, "switch">;
+    const expected = scene[
+      entity_id as Extract<keyof SCENE, PICK_FROM_AREA<ROOM, "switch">>
+    ] as SceneSwitchState;
     if (is.empty(expected)) {
       // ??
       return;
@@ -43,19 +51,23 @@ export function AggressiveScenes({
     }
     let performedUpdate = false;
     if (entity.state !== expected.state) {
-      await matchSwitchToScene(entity, expected);
+      await matchSwitchToScene(
+        entity as ENTITY_STATE<PICK_FROM_AREA<ROOM, "switch">>,
+        expected,
+      );
       performedUpdate = true;
     }
     if (performedUpdate) {
       return;
     }
 
-    if ("entity_id" in entity.attributes) {
+    const attributes = entity.attributes as { entity_id: PICK_ENTITY[] };
+    if ("entity_id" in attributes) {
       // ? This is a group
-      const id = entity.attributes.entity_id;
+      const id = attributes.entity_id;
       if (is.array(id) && !is.empty(id)) {
         await each(
-          entity.attributes.entity_id as PICK_ENTITY<"switch">[],
+          attributes.entity_id as PICK_ENTITY<"switch">[],
           async child_id => {
             const child = hass.entity.byId(child_id);
             if (!child) {
@@ -75,7 +87,11 @@ export function AggressiveScenes({
               return;
             }
             if (child.state !== expected.state) {
-              await matchSwitchToScene(child, expected);
+              await matchSwitchToScene<ROOM>(
+                // @ts-expect-error wtf
+                child as ENTITY_STATE<PICK_FROM_AREA<ROOM, "switch">>,
+                expected,
+              );
             }
           },
         );
@@ -83,8 +99,8 @@ export function AggressiveScenes({
     }
   }
 
-  async function matchSwitchToScene(
-    entity: ENTITY_STATE<PICK_ENTITY<"switch">>,
+  async function matchSwitchToScene<ROOM extends TAreaId>(
+    entity: ENTITY_STATE<PICK_FROM_AREA<ROOM, "switch">>,
     expected: SceneSwitchState,
   ) {
     const entity_id = entity.entity_id;
@@ -110,12 +126,12 @@ export function AggressiveScenes({
    * - warnings
    * - state changes
    */
-  async function validateRoomScene({
+  async function validateRoomScene<ROOM extends TAreaId>({
     scene,
     room,
     name,
     context,
-  }: TValidateOptions): Promise<void> {
+  }: TValidateOptions<ROOM>): Promise<void> {
     if (
       config.automation.AGGRESSIVE_SCENES === false ||
       scene?.aggressive === false
@@ -160,10 +176,9 @@ export function AggressiveScenes({
           );
           return;
         case "switch":
-          await manageSwitch(
-            entity as ENTITY_STATE<PICK_ENTITY<"switch">>,
-            scene.definition,
-          );
+          // @ts-expect-error wtf
+          const item = entity as ENTITY_STATE<PICK_FROM_AREA<ROOM, "switch">>;
+          await manageSwitch(item, scene.definition);
           return;
         default:
           logger.debug(

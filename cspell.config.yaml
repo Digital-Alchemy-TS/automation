@@ -5,5 +5,6 @@ dictionaries: []
 words:
   - hass
   - sonarjs
+  - mireds
 ignoreWords: []
 import: []

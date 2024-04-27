@@ -6,10 +6,20 @@ import {
   TServiceParams,
   VALUE,
 } from "@digital-alchemy/core";
-import { ALL_DOMAINS, PICK_ENTITY } from "@digital-alchemy/hass";
+import {
+  ALL_DOMAINS,
+  PICK_ENTITY,
+  PICK_FROM_AREA,
+  TAreaId,
+} from "@digital-alchemy/hass";
 import { VirtualSensor } from "@digital-alchemy/synapse";
 
-import { RoomConfiguration, RoomScene, SceneLightState } from "..";
+import {
+  RoomConfiguration,
+  RoomScene,
+  SceneDefinition,
+  SceneLightState,
+} from "..";
 
 function toHassId<DOMAIN extends ALL_DOMAINS>(
   domain: DOMAIN,
@@ -23,11 +33,15 @@ function toHassId<DOMAIN extends ALL_DOMAINS>(
   return `${domain}.${name}` as PICK_ENTITY<DOMAIN>;
 }
 
-export type RoomDefinition<SCENES extends string = string> = {
+export type RoomDefinition<
+  SCENES extends string = string,
+  ROOM extends TAreaId = TAreaId,
+> = {
   scene: SCENES;
-  currentSceneDefinition: RoomScene;
+  currentSceneDefinition: RoomScene<ROOM>;
   currentSceneEntity: VirtualSensor<SCENES>;
   sceneId: (scene: SCENES) => PICK_ENTITY<"scene">;
+  name: ROOM;
 };
 interface HasKelvin {
   kelvin: number;
@@ -42,11 +56,11 @@ export function Room({
   context: parentContext,
 }: TServiceParams) {
   // eslint-disable-next-line sonarjs/cognitive-complexity
-  return function <SCENES extends string>({
-    name,
+  return function <SCENES extends string, ROOM extends TAreaId>({
+    area: name,
     context,
     scenes,
-  }: RoomConfiguration<SCENES>): RoomDefinition<SCENES> {
+  }: RoomConfiguration<SCENES, ROOM>): RoomDefinition<SCENES> {
     logger.info({ name }, `create room`);
     const SCENE_LIST = Object.keys(scenes) as SCENES[];
 
@@ -107,7 +121,8 @@ export function Room({
       if (!is.empty(target) && target !== "on") {
         return false;
       }
-      const current = (scenes[currentScene.state as SCENES] ?? {}) as RoomScene;
+      const current = (scenes[currentScene.state as SCENES] ??
+        {}) as RoomScene<ROOM>;
       const definition = current.definition;
       if (entity_id in definition) {
         const state = definition[entity_id] as SceneLightState;
@@ -119,15 +134,18 @@ export function Room({
     }
 
     function dynamicProperties(sceneName: SCENES) {
-      const item = scenes[sceneName] as RoomScene;
-      const definition = item.definition as Record<
-        PICK_ENTITY<"light">,
-        SceneLightState
+      const { definition } = scenes[sceneName] as RoomScene<
+        ROOM,
+        SceneDefinition<ROOM>
       >;
-      const entities = Object.keys(item.definition) as PICK_ENTITY<"light">[];
+      if (!is.object(definition)) {
+        return { lights: {}, scene: {} };
+      }
+      const entities = Object.keys(definition) as PICK_FROM_AREA<ROOM>[];
       const kelvin = automation.circadian.getKelvin();
       const list = entities
         .map(name => {
+          // @ts-expect-error wtf
           const value = definition[name] as SceneLightState;
 
           if (is.domain(name, "switch")) {
@@ -142,6 +160,7 @@ export function Room({
           return [name, { kelvin, ...value }];
         })
         .filter(i => !is.undefined(i));
+
       return {
         lights: Object.fromEntries(
           list.filter(i => !is.undefined((i[VALUE] as HasKelvin).kelvin)),
@@ -219,6 +238,9 @@ export function Room({
           return (scene: SCENES) => {
             return toHassId("scene", name, scene);
           };
+        }
+        if (property === "name") {
+          return name;
         }
         if (property === "currentSceneEntity") {
           return currentScene;
