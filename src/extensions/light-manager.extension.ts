@@ -14,6 +14,8 @@ import {
   ENTITY_STATE,
   GenericEntityDTO,
   PICK_ENTITY,
+  PICK_FROM_AREA,
+  TAreaId,
 } from "@digital-alchemy/hass";
 
 import { RoomDefinition } from "..";
@@ -77,11 +79,11 @@ export function LightManager({
    *
    * Same as RGB only, but will preferentially use color temp mode
    */
-  async function manageLight(
+  async function manageLight<ROOM extends TAreaId>(
     entity: ENTITY_STATE<PICK_ENTITY<"light">>,
-    scene: SceneDefinition,
+    scene: SceneDefinition<ROOM>,
   ) {
-    const entity_id = entity.entity_id as PICK_ENTITY<"light">;
+    const entity_id = entity.entity_id as PICK_FROM_AREA<ROOM, "light">;
     const expected = scene[entity_id] as SceneLightState;
     if (is.empty(expected)) {
       // ??
@@ -283,15 +285,15 @@ export function LightManager({
           // Notice already being emitted from room extension
           return [];
         }
-        return Object.keys(room.currentSceneDefinition.definition).filter(
-          key => {
-            if (!is.domain(key, "light")) {
-              return false;
-            }
-            // TODO: Introduce additional checks for items like rgb color
-            return room.currentSceneDefinition.definition[key].state !== "off";
-          },
-        );
+        const keys = Object.keys(current) as (keyof typeof current)[];
+        return keys.filter(key => {
+          if (!is.domain(key, "light")) {
+            return false;
+          }
+          const entity = current[key] as { state: string };
+          // TODO: Introduce additional checks for items like rgb color
+          return entity.state !== "off";
+        });
       }),
     ) as PICK_ENTITY<"light">[];
 

@@ -1,5 +1,12 @@
 import { TContext } from "@digital-alchemy/core";
-import { ALL_DOMAINS, GetDomain, PICK_ENTITY } from "@digital-alchemy/hass";
+import {
+  ALL_DOMAINS,
+  GetDomain,
+  PICK_ENTITY,
+  PICK_FROM_AREA,
+  REGISTRY_SETUP,
+  TAreaId,
+} from "@digital-alchemy/hass";
 
 type SceneAwareDomains = "switch" | "light";
 type RGB = [r: number, g: number, b: number];
@@ -29,9 +36,12 @@ export type SceneDescription<RoomNames extends string = string> = {
   global: string[];
   rooms: Partial<Record<RoomNames, string[]>>;
 };
-export interface AutomationLogicModuleConfiguration {
+export interface AutomationLogicModuleConfiguration<
+  SCENES extends string = string,
+  ROOM extends TAreaId = TAreaId,
+> {
   global_scenes?: Record<string, boolean>;
-  room_configuration?: Record<string, RoomConfiguration<string>>;
+  room_configuration?: Record<string, RoomConfiguration<SCENES, ROOM>>;
 }
 
 export type AllowedSceneDomains = Extract<
@@ -64,31 +74,35 @@ type MappedDomains = {
   switch: SceneSwitchState;
 };
 
-export type SceneDefinition = Partial<{
-  [entity_id in PICK_ENTITY<
+export type SceneDefinition<AREA extends TAreaId> = Partial<{
+  [entity_id in PICK_FROM_AREA<
+    AREA,
     keyof MappedDomains
-  >]: MappedDomains[GetDomain<entity_id>];
+  >]: MappedDomains[Extract<GetDomain<entity_id>, keyof MappedDomains>];
 }>;
 
-export type SceneList<SCENES extends string> = Record<
+export type SceneList<AREA extends TAreaId, SCENES extends string> = Record<
   SCENES,
-  Partial<Record<PICK_ENTITY<AllowedSceneDomains>, SceneDefinition>>
+  Partial<Record<PICK_ENTITY<AllowedSceneDomains>, SceneDefinition<AREA>>>
 >;
 
-export type RoomConfiguration<SCENES extends string> = {
+export type RoomConfiguration<SCENES extends string, ROOM extends TAreaId> = {
   context: TContext;
   /**
    * Friendly name
    */
-  name?: string;
+  area?: ROOM;
 
   /**
    * Global scenes are required to be declared within the room
    */
-  scenes: Record<SCENES, RoomScene>;
+  scenes: Record<SCENES, RoomScene<ROOM>>;
 };
 
-export type RoomScene<DEFINITION extends SceneDefinition = SceneDefinition> = {
+export type RoomScene<
+  AREA extends TAreaId,
+  DEFINITION extends SceneDefinition<AREA> = SceneDefinition<AREA>,
+> = {
   /**
    * Ensure entities are maintained as the scene says they should be
    *
@@ -109,5 +123,7 @@ export type RoomScene<DEFINITION extends SceneDefinition = SceneDefinition> = {
    * Human understandable description of this scene (short form)
    */
   friendly_name?: string;
-  definition: DEFINITION;
+  definition: REGISTRY_SETUP["area"][`_${AREA}`] extends never
+    ? never
+    : DEFINITION;
 };
