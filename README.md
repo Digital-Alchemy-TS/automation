@@ -104,10 +104,7 @@ export function ExampleRoom({ automation, context }: TServiceParams) {
 
       // check sun position
       if (automation.solar.isBetween("dawn", "dusk")) {
-
-        // create some reference points with dayjs
-        const [PM530, NOW] = automation.utils.shortTime(["PM5:30", "NOW"]);
-        return NOW.isBefore(PM530);
+        return automation.time.isBefore("PM5:30")
       }
       return false;
     },

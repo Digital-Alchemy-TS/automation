@@ -1,5 +1,7 @@
 import {
   CronExpression,
+  is,
+  NONE,
   TBlackHole,
   TContext,
   TServiceParams,
@@ -191,19 +193,16 @@ export function SolarCalculator({
   };
 
   solarReference.onEvent = ({
-    context,
     eventName,
     label,
     exec,
+    offset,
   }: OnSolarEvent) => {
-    event.on(eventName, async () => {
-      await internal.safeExec({
-        duration: undefined,
-        errors: undefined,
-        exec: async () => await exec(),
-        executions: undefined,
-        labels: { context, label },
-      });
+    scheduler.sliding({
+      exec: async () => await exec(),
+      label,
+      next: () => solarReference[eventName].add(offset ?? NONE, "ms"),
+      reset: CronExpression.EVERY_DAY_AT_MIDNIGHT,
     });
   };
 
@@ -211,8 +210,8 @@ export function SolarCalculator({
 }
 
 type OnSolarEvent = {
-  context: TContext;
   label?: string;
+  offset?: number;
   eventName: SolarEvents;
   exec: () => TBlackHole;
 };
