@@ -1,11 +1,12 @@
-import { NONE, START } from "@digital-alchemy/core";
+import { NONE, sleep, START, TServiceParams } from "@digital-alchemy/core";
 import dayjs, { Dayjs } from "dayjs";
 
 type Digit = `${number}`;
 
 type TimeString = Digit | `${Digit}:${Digit}` | `${Digit}:${Digit}:${Digit}`;
 
-type ShortTime = `${AmPm}${ShortDigits}${ShortSuffix}` | "NOW" | "TOMORROW";
+export type TShortTime = `${AmPm}${ShortDigits}${ShortSuffix}`;
+type ShortTime = TShortTime | "NOW" | "TOMORROW";
 type ShortDigits =
   | "1"
   | "2"
@@ -33,9 +34,29 @@ type ShortSuffix = "" | ":00" | ":15" | ":30" | ":45";
 
 const SLICE_LENGTH = "AM".length;
 const ROLLOVER = 12;
-
-export function Utils() {
+export function Time({ automation }: TServiceParams) {
   return {
+    /**
+     * Fast time check
+     */
+    isAfter(time: TShortTime) {
+      const [NOW, target] = automation.time.shortTime(["NOW", time]);
+      return NOW.isAfter(target);
+    },
+    /**
+     * Fast time check
+     */
+    isBefore(time: TShortTime) {
+      const [NOW, target] = automation.time.shortTime(["NOW", time]);
+      return NOW.isBefore(target);
+    },
+    /**
+     * Fast time check
+     */
+    isBetween(start: TShortTime, end: TShortTime) {
+      const [NOW, START, END] = automation.time.shortTime(["NOW", start, end]);
+      return NOW.isBetween(START, END);
+    },
     /**
      * Quickly calculate reference points in time.
      * Times are in reference to 12AM/midnight this morning, and input in 24 hour format.
@@ -60,6 +81,7 @@ export function Utils() {
       const today = dayjs().format("YYYY-MM-DD");
       return times.map(i => dayjs(`${today} ${i}`).millisecond(NONE));
     },
+
     /**
      * Quickly calculate reference points in time.
      * Times are in reference to 12AM/midnight this morning.
@@ -97,5 +119,7 @@ export function Utils() {
         return dayjs(`${today} ${hour}:${minute}`).millisecond(NONE);
       });
     },
+
+    wait: (ms: number | Date) => sleep(ms),
   };
 }

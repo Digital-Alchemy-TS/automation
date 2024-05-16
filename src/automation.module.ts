@@ -10,8 +10,8 @@ import {
   Room,
   SequenceWatcher,
   SolarCalculator,
+  Time,
 } from "./extensions";
-import { Utils } from "./extensions/utils.extension";
 
 export const LIB_AUTOMATION = CreateLibrary({
   configuration: {
@@ -73,7 +73,7 @@ export const LIB_AUTOMATION = CreateLibrary({
   depends: [LIB_HASS, LIB_SYNAPSE],
   name: "automation",
   // light depends circadian
-  priorityInit: ["utils", "circadian"],
+  priorityInit: ["time", "circadian"],
   services: {
     /**
      * # Aggressive Scenes extension
@@ -117,7 +117,7 @@ export const LIB_AUTOMATION = CreateLibrary({
     /**
      * Helper functions
      */
-    utils: Utils,
+    time: Time,
   },
 });
 

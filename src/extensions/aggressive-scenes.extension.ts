@@ -61,7 +61,10 @@ export function AggressiveScenes({
       return;
     }
 
-    const attributes = entity.attributes as { entity_id: PICK_ENTITY[] };
+    // TODO: FIXME
+    const attributes = entity.attributes as unknown as {
+      entity_id: PICK_ENTITY[];
+    };
     if ("entity_id" in attributes) {
       // ? This is a group
       const id = attributes.entity_id;

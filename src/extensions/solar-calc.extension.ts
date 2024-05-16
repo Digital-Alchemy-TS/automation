@@ -1,11 +1,16 @@
 import {
   CronExpression,
+  is,
   TBlackHole,
-  TContext,
   TServiceParams,
 } from "@digital-alchemy/core";
 import { HassConfig } from "@digital-alchemy/hass";
 import dayjs, { Dayjs } from "dayjs";
+import {
+  Duration,
+  DurationUnitsObjectType,
+  DurationUnitType,
+} from "dayjs/plugin/duration";
 import EventEmitter from "events";
 
 import { calcSolNoon, calcSunriseSet } from "..";
@@ -44,6 +49,45 @@ const degreesBelowHorizon = {
   twilight: 6,
 };
 const UNLIMITED = 0;
+type Part<CHAR extends string> = `${number}${CHAR}` | "";
+type ISO_8601_PARTIAL =
+  | `${Part<"H" | "h">}${Part<"M" | "m">}${Part<"S" | "s">}`
+  | "";
+
+export type OffsetTypes =
+  | Duration
+  | number
+  | DurationUnitsObjectType
+  | ISO_8601_PARTIAL
+  | [quantity: number, unit: DurationUnitType];
+
+type TOffset = OffsetTypes | (() => OffsetTypes);
+
+type OnSolarEvent = {
+  label?: string;
+  /**
+   * **Any quantity may be negative**
+   *
+   * Value must be:
+   * - (`number`) `ms`
+   * - (`tuple`) [`quantity`, `unit`]
+   * - (`string`) `ISO 8601` duration string: `P(#Y)(#M)(#D)(T(#H)(#M)(#S))`
+   * - (`object`) mapping of units to quantities
+   * - (`Duration`) `dayjs.duration` object
+   * - (`function`) a function that returns any of the above
+   * ---
+   * Offset calculated at midnight & init
+   */
+  offset?: TOffset;
+  eventName: SolarEvents;
+  exec: () => TBlackHole;
+};
+
+type SolarReference = Record<SolarEvents, Dayjs> & {
+  isBetween: (a: SolarEvents, b: SolarEvents) => boolean;
+  loaded: boolean;
+  onEvent: (options: OnSolarEvent) => TBlackHole;
+};
 
 /**
  * Benefits from a persistent cache, like Redis
@@ -51,7 +95,6 @@ const UNLIMITED = 0;
 export function SolarCalculator({
   logger,
   cache,
-  internal,
   scheduler,
   hass,
   lifecycle,
@@ -190,35 +233,55 @@ export function SolarCalculator({
     return now.isBetween(solarReference[a], solarReference[b]);
   };
 
+  function getNextTime(eventName: SolarEvents, offset: TOffset, label: string) {
+    let duration: Duration;
+    // * if function, unwrap
+    if (is.function(offset)) {
+      offset = offset();
+      logger.trace({ eventName, label, offset }, `resolved offset`);
+    }
+    // * if tuple, resolve
+    if (is.array(offset)) {
+      const [amount, unit] = offset;
+      duration = dayjs.duration(amount, unit);
+      // * resolve objects, or capture Duration
+    } else if (is.object(offset)) {
+      duration = isDuration(offset)
+        ? (offset as Duration)
+        : dayjs.duration(offset as DurationUnitsObjectType);
+    }
+    // * resolve from partial ISO 8601
+    if (is.string(offset)) {
+      duration = dayjs.duration(`PT${offset.toUpperCase()}`);
+    }
+    // * ms
+    if (is.number(offset)) {
+      duration = dayjs.duration(offset, "ms");
+    }
+    return duration
+      ? solarReference[eventName].add(duration)
+      : solarReference[eventName];
+  }
+
   solarReference.onEvent = ({
-    context,
     eventName,
     label,
     exec,
+    offset,
   }: OnSolarEvent) => {
-    event.on(eventName, async () => {
-      await internal.safeExec({
-        duration: undefined,
-        errors: undefined,
-        exec: async () => await exec(),
-        executions: undefined,
-        labels: { context, label },
-      });
+    scheduler.sliding({
+      exec: async () => await exec(),
+      label,
+      next: () => getNextTime(eventName, offset, label),
+      reset: CronExpression.EVERY_DAY_AT_MIDNIGHT,
     });
   };
 
   return solarReference as SolarReference;
 }
 
-type OnSolarEvent = {
-  context: TContext;
-  label?: string;
-  eventName: SolarEvents;
-  exec: () => TBlackHole;
-};
-
-type SolarReference = Record<SolarEvents, Dayjs> & {
-  isBetween: (a: SolarEvents, b: SolarEvents) => boolean;
-  loaded: boolean;
-  onEvent: (options: OnSolarEvent) => TBlackHole;
-};
+function isDuration(
+  item: Duration | DurationUnitsObjectType,
+): item is Duration {
+  return typeof item.days === "function";
+}
