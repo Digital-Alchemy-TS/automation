@@ -1,7 +1,6 @@
 import {
   CronExpression,
   is,
-  NONE,
   TBlackHole,
   TServiceParams,
 } from "@digital-alchemy/core";
@@ -51,19 +50,35 @@ const degreesBelowHorizon = {
 };
 const UNLIMITED = 0;
 type Part<CHAR extends string> = `${number}${CHAR}` | "";
-type Time = `T${Part<"H">}${Part<"M">}${Part<"S">}` | "";
-type ISO_8601 = `P${Part<"Y">}${Part<"M">}${Part<"W">}${Part<"D">}${Time}`;
+type ISO_8601_PARTIAL =
+  | `${Part<"H" | "h">}${Part<"M" | "m">}${Part<"S" | "s">}`
+  | "";
 
-type OffsetTypes =
+export type OffsetTypes =
   | Duration
   | number
   | DurationUnitsObjectType
-  | ISO_8601
+  | ISO_8601_PARTIAL
   | [quantity: number, unit: DurationUnitType];
+
+type TOffset = OffsetTypes | (() => OffsetTypes);
 
 type OnSolarEvent = {
   label?: string;
-  offset?: OffsetTypes | (() => OffsetTypes);
+  /**
+   * **Any quantity may be negative**
+   *
+   * Value must be:
+   * - (`number`) `ms`
+   * - (`tuple`) [`quantity`, `unit`]
+   * - (`string`) `ISO 8601` duration string: `P(#Y)(#M)(#D)(T(#H)(#M)(#S))`
+   * - (`object`) mapping of units to quantities
+   * - (`Duration`) `dayjs.duration` object
+   * - (`function`) a function that returns any of the above
+   * ---
+   * Offset calculated at midnight & init
+   */
+  offset?: TOffset;
   eventName: SolarEvents;
   exec: () => TBlackHole;
 };
@@ -218,37 +233,46 @@ export function SolarCalculator({
     return now.isBetween(solarReference[a], solarReference[b]);
   };
 
+  function getNextTime(eventName: SolarEvents, offset: TOffset, label: string) {
+    let duration: Duration;
+    // * if function, unwrap
+    if (is.function(offset)) {
+      offset = offset();
+      logger.trace({ eventName, label, offset }, `resolved offset`);
+    }
+    // * if tuple, resolve
+    if (is.array(offset)) {
+      const [amount, unit] = offset;
+      duration = dayjs.duration(amount, unit);
+      // * resolve objects, or capture Duration
+    } else if (is.object(offset)) {
+      duration = isDuration(offset)
+        ? (offset as Duration)
+        : dayjs.duration(offset as DurationUnitsObjectType);
+    }
+    // * resolve from partial ISO 8601
+    if (is.string(offset)) {
+      duration = dayjs.duration(`PT${offset.toUpperCase()}`);
+    }
+    // * ms
+    if (is.number(offset)) {
+      duration = dayjs.duration(offset, "ms");
+    }
+    return duration
+      ? solarReference[eventName].add(duration)
+      : solarReference[eventName];
+  }
+
   solarReference.onEvent = ({
     eventName,
     label,
     exec,
     offset,
   }: OnSolarEvent) => {
-    let duration: Duration;
-    if (is.function(offset)) {
-      offset = offset();
-    }
-    if (is.array(offset)) {
-      const [amount, unit] = offset;
-      duration = dayjs.duration(amount, unit);
-    } else if (is.object(offset)) {
-      duration = isDuration(offset)
-        ? (offset as Duration)
-        : dayjs.duration(offset as DurationUnitsObjectType);
-    }
-    if (is.string(offset)) {
-      duration = dayjs.duration(offset);
-    }
-    if (is.number(offset)) {
-      duration = dayjs.duration(offset, "ms");
-    }
     scheduler.sliding({
       exec: async () => await exec(),
       label,
-      next: () =>
-        duration
-          ? solarReference[eventName].add(duration)
-          : solarReference[eventName],
+      next: () => getNextTime(eventName, offset, label),
       reset: CronExpression.EVERY_DAY_AT_MIDNIGHT,
     });
   };
