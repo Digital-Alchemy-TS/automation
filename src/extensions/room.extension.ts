@@ -145,7 +145,6 @@ export function Room({
       const kelvin = automation.circadian.getKelvin();
       const list = entities
         .map(name => {
-          // @ts-expect-error wtf
           const value = definition[name] as SceneLightState;
 
           if (is.domain(name, "switch")) {

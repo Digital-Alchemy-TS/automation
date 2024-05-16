@@ -13,6 +13,7 @@ import {
   ByIdProxy,
   ENTITY_STATE,
   GenericEntityDTO,
+  HassEntityContext,
   PICK_ENTITY,
   PICK_FROM_AREA,
   TAreaId,
@@ -27,22 +28,27 @@ import {
 } from "../helpers";
 
 type ColorModes = "color_temp" | "xy" | "brightness";
-export type ColorLight = GenericEntityDTO<{
-  brightness: number;
-  color_mode: ColorModes;
-  color_temp: number;
-  color_temp_kelvin: number;
-  entity_id?: PICK_ENTITY<"light">[];
-  hs_color: [h: number, s: number];
-  max_color_temp_kelvin: number;
-  max_mireds: number;
-  min_color_temp_kelvin: number;
-  min_mireds: number;
-  rgb_color: [number, number, number];
-  supported_color_modes: ColorModes[];
-  supported_features: number;
-  xy_color: [x: number, y: number];
-}>;
+export type ColorLight = GenericEntityDTO<
+  {
+    brightness: number;
+    color_mode: ColorModes;
+    color_temp: number;
+    color_temp_kelvin: number;
+    entity_id?: PICK_ENTITY<"light">[];
+    hs_color: [h: number, s: number];
+    max_color_temp_kelvin: number;
+    max_mireds: number;
+    min_color_temp_kelvin: number;
+    min_mireds: number;
+    rgb_color: [number, number, number];
+    supported_color_modes: ColorModes[];
+    supported_features: number;
+    xy_color: [x: number, y: number];
+  },
+  string,
+  HassEntityContext,
+  "light"
+>;
 // const MAX_DIFFERENCE = 100;
 
 type DiffList = {
@@ -293,7 +299,7 @@ export function LightManager({
           const entity = current[key] as { state: string };
           // TODO: Introduce additional checks for items like rgb color
           return entity.state !== "off";
-        });
+        }) as PICK_ENTITY<"light">[];
       }),
     ) as PICK_ENTITY<"light">[];
 
