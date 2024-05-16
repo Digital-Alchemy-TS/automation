@@ -3,11 +3,15 @@ import {
   is,
   NONE,
   TBlackHole,
-  TContext,
   TServiceParams,
 } from "@digital-alchemy/core";
 import { HassConfig } from "@digital-alchemy/hass";
 import dayjs, { Dayjs } from "dayjs";
+import {
+  Duration,
+  DurationUnitsObjectType,
+  DurationUnitType,
+} from "dayjs/plugin/duration";
 import EventEmitter from "events";
 
 import { calcSolNoon, calcSunriseSet } from "..";
@@ -46,6 +50,29 @@ const degreesBelowHorizon = {
   twilight: 6,
 };
 const UNLIMITED = 0;
+type Part<CHAR extends string> = `${number}${CHAR}` | "";
+type Time = `T${Part<"H">}${Part<"M">}${Part<"S">}` | "";
+type ISO_8601 = `P${Part<"Y">}${Part<"M">}${Part<"W">}${Part<"D">}${Time}`;
+
+type OffsetTypes =
+  | Duration
+  | number
+  | DurationUnitsObjectType
+  | ISO_8601
+  | [quantity: number, unit: DurationUnitType];
+
+type OnSolarEvent = {
+  label?: string;
+  offset?: OffsetTypes | (() => OffsetTypes);
+  eventName: SolarEvents;
+  exec: () => TBlackHole;
+};
+
+type SolarReference = Record<SolarEvents, Dayjs> & {
+  isBetween: (a: SolarEvents, b: SolarEvents) => boolean;
+  loaded: boolean;
+  onEvent: (options: OnSolarEvent) => TBlackHole;
+};
 
 /**
  * Benefits from a persistent cache, like Redis
@@ -53,7 +80,6 @@ const UNLIMITED = 0;
 export function SolarCalculator({
   logger,
   cache,
-  internal,
   scheduler,
   hass,
   lifecycle,
@@ -198,10 +224,31 @@ export function SolarCalculator({
     exec,
     offset,
   }: OnSolarEvent) => {
+    let duration: Duration;
+    if (is.function(offset)) {
+      offset = offset();
+    }
+    if (is.array(offset)) {
+      const [amount, unit] = offset;
+      duration = dayjs.duration(amount, unit);
+    } else if (is.object(offset)) {
+      duration = isDuration(offset)
+        ? (offset as Duration)
+        : dayjs.duration(offset as DurationUnitsObjectType);
+    }
+    if (is.string(offset)) {
+      duration = dayjs.duration(offset);
+    }
+    if (is.number(offset)) {
+      duration = dayjs.duration(offset, "ms");
+    }
     scheduler.sliding({
       exec: async () => await exec(),
       label,
-      next: () => solarReference[eventName].add(offset ?? NONE, "ms"),
+      next: () =>
+        duration
+          ? solarReference[eventName].add(duration)
+          : solarReference[eventName],
       reset: CronExpression.EVERY_DAY_AT_MIDNIGHT,
     });
   };
@@ -209,15 +256,8 @@ export function SolarCalculator({
   return solarReference as SolarReference;
 }
 
-type OnSolarEvent = {
-  label?: string;
-  offset?: number;
-  eventName: SolarEvents;
-  exec: () => TBlackHole;
-};
-
-type SolarReference = Record<SolarEvents, Dayjs> & {
-  isBetween: (a: SolarEvents, b: SolarEvents) => boolean;
-  loaded: boolean;
-  onEvent: (options: OnSolarEvent) => TBlackHole;
-};
+function isDuration(
+  item: Duration | DurationUnitsObjectType,
+): item is Duration {
+  return typeof item.days === "function";
+}
