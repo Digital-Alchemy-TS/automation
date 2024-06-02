@@ -8,11 +8,11 @@ import {
 } from "@digital-alchemy/core";
 import {
   ALL_DOMAINS,
+  ByIdProxy,
   PICK_ENTITY,
   PICK_FROM_AREA,
   TAreaId,
 } from "@digital-alchemy/hass";
-import { VirtualSensor } from "@digital-alchemy/synapse";
 
 import {
   RoomConfiguration,
@@ -39,7 +39,7 @@ export type RoomDefinition<
 > = {
   scene: SCENES;
   currentSceneDefinition: RoomScene<ROOM>;
-  currentSceneEntity: VirtualSensor<SCENES>;
+  currentSceneEntity: ByIdProxy<PICK_ENTITY<"sensor">>;
   sceneId: (scene: SCENES) => PICK_ENTITY<"scene">;
   name: ROOM;
 };
@@ -65,41 +65,19 @@ export function Room({
     const SCENE_LIST = Object.keys(scenes) as SCENES[];
 
     const sensorName = `${name} current scene`;
-    const currentScene = synapse.sensor<SCENES>({
+    const currentScene = synapse.sensor({
       context,
       name: sensorName,
     });
-
-    function restoreFromEntity() {
-      const importedValue = hass.entity.byId(toHassId("sensor", sensorName))
-        .state as SCENES;
-      const current = currentScene.state;
-      if (is.empty(current) && !SCENE_LIST.includes(importedValue)) {
-        return undefined;
-      }
-      currentScene.state = importedValue;
-      return importedValue;
-    }
+    const sensor = currentScene.getEntity() as ByIdProxy<PICK_ENTITY<"sensor">>;
 
     scheduler.cron({
       exec: async () => {
-        let current = currentScene.state;
-        if (!SCENE_LIST.includes(current)) {
-          current = restoreFromEntity();
-          if (!SCENE_LIST.includes(current)) {
-            logger.warn(
-              { name, scene: current || "(empty string)" },
-              `room is set to an invalid scene`,
-            );
-            return;
-          }
-          logger.debug({ current, name: sensorName }, `imported value restore`);
-        }
         await automation.aggressive.validateRoomScene({
           context,
-          name: current,
+          name: sensor.state,
           room: name,
-          scene: scenes[current],
+          scene: scenes[sensor.state as SCENES],
         });
       },
       schedule: CronExpression.EVERY_30_SECONDS,
@@ -121,7 +99,7 @@ export function Room({
       if (!is.empty(target) && target !== "on") {
         return false;
       }
-      const current = (scenes[currentScene.state as SCENES] ??
+      const current = (scenes[currentScene.storage.get("state") as SCENES] ??
         {}) as RoomScene<ROOM>;
       const definition = current.definition;
       if (entity_id in definition) {
@@ -212,18 +190,18 @@ export function Room({
         );
       }
       logger.info({ name }, `set scene {%s}`, sceneName);
-      currentScene.state = sceneName;
+      currentScene.storage.set("state", sceneName);
       await sceneApply(sceneName);
     }
 
     SCENE_LIST.forEach(scene => {
       const sceneName = `${name} ${scene}`;
       synapse.scene({
-        context,
-        exec: async () => {
+        async activate() {
           logger.trace({ name: sceneName }, `scene activate`);
           await setScene(scene as SCENES);
         },
+        context,
         name: sceneName,
       });
     });
@@ -231,7 +209,7 @@ export function Room({
     const out = new Proxy({} as RoomDefinition<SCENES>, {
       get: (_, property: keyof RoomDefinition<SCENES>) => {
         if (property === "scene") {
-          return currentScene.state;
+          return currentScene.storage.get("state");
         }
         if (property === "sceneId") {
           return (scene: SCENES) => {
@@ -242,10 +220,10 @@ export function Room({
           return name;
         }
         if (property === "currentSceneEntity") {
-          return currentScene;
+          return currentScene.getEntity();
         }
         if (property === "currentSceneDefinition") {
-          return scenes[currentScene.state];
+          return scenes[currentScene.storage.get("state") as SCENES];
         }
         return undefined;
       },

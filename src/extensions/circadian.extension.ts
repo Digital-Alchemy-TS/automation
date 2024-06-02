@@ -16,7 +16,7 @@ export function CircadianLighting({
   context,
   event,
 }: TServiceParams) {
-  let circadianEntity: ReturnType<typeof synapse.sensor<number>>;
+  let circadianEntity: ReturnType<typeof synapse.sensor>;
 
   lifecycle.onPostConfig(() => {
     if (!config.automation.CIRCADIAN_ENABLED) {
@@ -49,11 +49,14 @@ export function CircadianLighting({
       return;
     }
     const offset = getColorOffset();
-    circadianEntity.state = Math.floor(
-      (config.automation.CIRCADIAN_MAX_TEMP -
-        config.automation.CIRCADIAN_MIN_TEMP) *
-        offset +
-        config.automation.CIRCADIAN_MIN_TEMP,
+    circadianEntity.storage.set(
+      "state",
+      Math.floor(
+        (config.automation.CIRCADIAN_MAX_TEMP -
+          config.automation.CIRCADIAN_MIN_TEMP) *
+          offset +
+          config.automation.CIRCADIAN_MIN_TEMP,
+      ),
     );
   }
 
@@ -93,7 +96,7 @@ export function CircadianLighting({
 
   const out = {
     circadianEntity,
-    getKelvin: () => circadianEntity?.state,
+    getKelvin: () => Number(circadianEntity?.storage.get("state")),
     updateKelvin,
   };
   return out;
