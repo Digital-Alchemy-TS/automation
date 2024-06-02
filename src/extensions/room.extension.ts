@@ -1,6 +1,7 @@
 import {
   CronExpression,
   eachSeries,
+  FIRST,
   InternalError,
   is,
   TServiceParams,
@@ -65,19 +66,24 @@ export function Room({
     const SCENE_LIST = Object.keys(scenes) as SCENES[];
 
     const sensorName = `${name} current scene`;
-    const currentScene = synapse.sensor({
+
+    const currentScene = synapse.select({
       context,
+      current_option: SCENE_LIST[FIRST],
+      managed: false,
       name: sensorName,
+      options: SCENE_LIST,
+      select_option: async ({ option }) => await setScene(option as SCENES),
     });
-    const sensor = currentScene.getEntity() as ByIdProxy<PICK_ENTITY<"sensor">>;
 
     scheduler.cron({
       exec: async () => {
+        const current = currentScene.storage.get("current_option") as SCENES;
         await automation.aggressive.validateRoomScene({
           context,
-          name: sensor.state,
+          name: current,
           room: name,
-          scene: scenes[sensor.state as SCENES],
+          scene: scenes[current],
         });
       },
       schedule: CronExpression.EVERY_30_SECONDS,
@@ -99,8 +105,9 @@ export function Room({
       if (!is.empty(target) && target !== "on") {
         return false;
       }
-      const current = (scenes[currentScene.storage.get("state") as SCENES] ??
-        {}) as RoomScene<ROOM>;
+      const current = (scenes[
+        currentScene.storage.get("current_option") as SCENES
+      ] ?? {}) as RoomScene<ROOM>;
       const definition = current.definition;
       if (entity_id in definition) {
         const state = definition[entity_id] as SceneLightState;
@@ -190,7 +197,7 @@ export function Room({
         );
       }
       logger.info({ name }, `set scene {%s}`, sceneName);
-      currentScene.storage.set("state", sceneName);
+      currentScene.storage.set("current_option", sceneName);
       await sceneApply(sceneName);
     }
 
@@ -209,7 +216,7 @@ export function Room({
     const out = new Proxy({} as RoomDefinition<SCENES>, {
       get: (_, property: keyof RoomDefinition<SCENES>) => {
         if (property === "scene") {
-          return currentScene.storage.get("state");
+          return currentScene.storage.get("current_option");
         }
         if (property === "sceneId") {
           return (scene: SCENES) => {
@@ -223,7 +230,7 @@ export function Room({
           return currentScene.getEntity();
         }
         if (property === "currentSceneDefinition") {
-          return scenes[currentScene.storage.get("state") as SCENES];
+          return scenes[currentScene.storage.get("current_option") as SCENES];
         }
         return undefined;
       },
