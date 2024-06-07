@@ -4,12 +4,20 @@ import { PICK_ENTITY } from "@digital-alchemy/hass";
 export type PickASwitch =
   | PICK_ENTITY<"switch">
   | { entity_id: PICK_ENTITY<"switch"> };
+
 type EntityUpdate =
   | PICK_ENTITY
   | { entity_id: PICK_ENTITY }
   | {
       onUpdate: (callback: () => TBlackHole) => void;
-      state: unknown;
+      /**
+       * Hass entity compat
+       */
+      state?: unknown;
+      /**
+       * Synapse entity compat
+       */
+      is_on?: boolean;
       name: string;
     };
 
