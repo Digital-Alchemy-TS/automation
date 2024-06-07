@@ -25,9 +25,9 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@digital-alchemy/core": "^0.3.16",
-    "@digital-alchemy/hass": "^0.3.30",
-    "@digital-alchemy/synapse": "^0.3.6",
+    "@digital-alchemy/core": "^0.3.17",
+    "@digital-alchemy/hass": "^0.3.31",
+    "@digital-alchemy/synapse": "^0.3.8",
     "dayjs": "^1.11.10",
     "prom-client": "^15.1.1"
   },

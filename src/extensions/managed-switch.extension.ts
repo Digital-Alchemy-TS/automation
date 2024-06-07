@@ -8,7 +8,12 @@ import {
 
 import { ManagedSwitchOptions, PickASwitch } from "../helpers";
 
-export function ManagedSwitch({ logger, hass, scheduler }: TServiceParams) {
+export function ManagedSwitch({
+  logger,
+  hass,
+  scheduler,
+  lifecycle,
+}: TServiceParams) {
   /**
    * Logic runner for the state enforcer
    */
@@ -54,49 +59,49 @@ export function ManagedSwitch({ logger, hass, scheduler }: TServiceParams) {
     shouldBeOn,
     onUpdate = [],
   }: ManagedSwitchOptions) {
-    logger.trace(
-      { context, entity_id, name: ManageSwitch },
-      `setting up managed switch`,
-    );
-    const entityList = is.array(entity_id) ? entity_id : [entity_id];
+    lifecycle.onReady(() => {
+      logger.trace(
+        { context, entity_id, name: ManageSwitch },
+        `setting up managed switch`,
+      );
+      const entityList = is.array(entity_id) ? entity_id : [entity_id];
 
-    // * Check if there should be a change
-    const update = async () => {
-      const expected = shouldBeOn();
-      if (!is.boolean(expected)) {
-        if (!is.undefined(expected)) {
-          logger.error(
-            { context, entity_id, expected, name: ManageSwitch },
-            `Invalid value from switch manage function`,
-          );
-          return;
-        }
-        return;
-      }
-      await updateEntities(expected, entityList, context);
-    };
-
-    // * Always run on a schedule
-    scheduler.cron({ exec: async () => await update(), schedule });
-
-    // * Update when relevant things update
-    if (!is.empty(onUpdate)) {
-      [onUpdate].flat().forEach(i => {
-        if (is.object(i) && !("entity_id" in i)) {
-          const onUpdate = i.onUpdate;
-          if (!is.function(onUpdate)) {
+      // * Check if there should be a change
+      const update = async () => {
+        const expected = shouldBeOn();
+        if (!is.boolean(expected)) {
+          if (!is.undefined(expected)) {
+            logger.error(
+              { context, entity_id, expected, name: ManageSwitch },
+              `Invalid value from switch manage function`,
+            );
             return;
           }
-          i.onUpdate(async () => {
-            await update();
-          });
           return;
         }
-        hass.entity
-          .byId(is.object(i) ? i.entity_id : i)
-          .onUpdate(async () => await update());
-      });
-    }
+        await updateEntities(expected, entityList, context);
+      };
+
+      // * Always run on a schedule
+      scheduler.cron({ exec: async () => await update(), schedule });
+
+      // * Update when relevant things update
+      if (!is.empty(onUpdate)) {
+        [onUpdate].flat().forEach(i => {
+          if (is.object(i) && !("entity_id" in i)) {
+            const onUpdate = i.onUpdate;
+            if (!is.function(onUpdate)) {
+              return;
+            }
+            i.onUpdate(async () => await update());
+            return;
+          }
+          hass.entity
+            .byId(is.object(i) ? i.entity_id : i)
+            .onUpdate(async () => await update());
+        });
+      }
+    });
   }
   return ManageSwitch;
 }
