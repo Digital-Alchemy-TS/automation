@@ -179,7 +179,6 @@ export function AggressiveScenes({
           );
           return;
         case "switch":
-          // @ts-expect-error wtf
           const item = entity as ENTITY_STATE<PICK_FROM_AREA<ROOM, "switch">>;
           await manageSwitch(item, scene.definition);
           return;
