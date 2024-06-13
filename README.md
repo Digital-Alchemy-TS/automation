@@ -4,7 +4,7 @@ Welcome to `@digital-alchemy/automation`!
 
 This project builds on the utilities provided by `@digital-alchemy/hass` & `@digital-alchemy/synapse` to create home automation focused utilities for easily coordinating entities.
 
-- [Extended docs](https://docs.digital-alchemy.app/Automation)
+- [Extended docs](https://docs.digital-alchemy.app)
 - [Discord](https://discord.gg/JkZ35Gv97Y)
 
 ## 💾 Install
@@ -12,6 +12,7 @@ This project builds on the utilities provided by `@digital-alchemy/hass` & `@dig
 You can install the custom component through HACS. See the repo for more detailed install instructions of the component: https://github.com/Digital-Alchemy-TS/synapse-extension
 
 This library can be installed as a simple dependency
+
 ```bash
 npm i @digital-alchemy/automation @digital-alchemy/synapse @digital-alchemy/hass
 ```
@@ -22,10 +23,11 @@ Then added to your project
 import { LIB_AUTOMATION } from "@digital-alchemy/automation";
 import { LIB_HASS } from "@digital-alchemy/hass";
 import { LIB_SYNAPSE } from "@digital-alchemy/synapse";
+import { LIB_FASTIFY } from "@digital-alchemy/fastify-extension";
 
 // application
 const MY_APP = CreateApplication({
-  libraries: [LIB_HASS, LIB_SYNAPSE, LIB_AUTOMATION],
+  libraries: [LIB_HASS, LIB_SYNAPSE, LIB_AUTOMATION, LIB_FASTIFY],
   name: "home_automation",
 })
 
@@ -37,9 +39,11 @@ export const MY_LIBRARY = CreateLibrary({
 ```
 
 ## 🛠️ Utilities
+
 ### 🏠 Rooms w/ coordinated scenes
 
 Create rooms, with the ability to coordinate sets of entities together in scenes.
+
 ```typescript
 import { CronExpression, TServiceParams } from "@digital-alchemy/core";
 
