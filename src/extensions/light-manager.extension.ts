@@ -95,7 +95,7 @@ export function LightManager({
       // ??
       return;
     }
-    if (entity.state === "unavailable") {
+    if (String(entity.state) === "unavailable") {
       logger.warn(
         { entity_id, name: manageLight },
         `entity is unavailable, cannot manage state`,
@@ -111,7 +111,7 @@ export function LightManager({
 
       if (is.array(list) && !is.empty(list)) {
         await each(list, async child_id => {
-          const child = hass.entity.byId(child_id);
+          const child = hass.refBy.id(child_id);
           if (!child) {
             logger.warn(
               { name: manageLight },
@@ -255,7 +255,7 @@ export function LightManager({
   ): Promise<boolean> {
     const entity_id = entity.entity_id as PICK_ENTITY<"light">;
     if (expected.state === "off") {
-      if (entity.state === "on") {
+      if (String(entity.state) === "on") {
         logger.debug({ entity_id, name: matchToScene }, `on => off`);
         await hass.call.light.turn_off({ entity_id });
         return true;
@@ -306,7 +306,7 @@ export function LightManager({
     // * Calculate how off the light is, omit ones that within tolerance, sort list by difference
     return lightsToCheck
       .map(light => ({
-        diff: getCurrentDiff(hass.entity.byId(light)),
+        diff: getCurrentDiff(hass.refBy.id(light)),
         light,
       }))
       .filter(({ diff }) => diff >= config.automation.CIRCADIAN_DIFF_THRESHOLD)

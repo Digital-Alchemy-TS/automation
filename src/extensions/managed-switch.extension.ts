@@ -37,7 +37,7 @@ export function ManagedSwitch({
       .map(i => (is.string(i) ? i : i.entity_id));
 
     const shouldExecute = entity_id.some(
-      id => !action.includes(hass.entity.byId(id)?.state?.toLocaleLowerCase()),
+      id => !action.includes(hass.refBy.id(id)?.state?.toLocaleLowerCase()),
     );
     if (!shouldExecute) {
       return;
@@ -96,8 +96,8 @@ export function ManagedSwitch({
             i.onUpdate(async () => await update());
             return;
           }
-          hass.entity
-            .byId(is.object(i) ? i.entity_id : i)
+          hass.refBy
+            .id(is.object(i) ? i.entity_id : i)
             .onUpdate(async () => await update());
         });
       }

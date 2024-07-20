@@ -2,13 +2,13 @@
   "name": "@digital-alchemy/automation",
   "repository": "https://github.com/Digital-Alchemy-TS/automation",
   "homepage": "https://docs.digital-alchemy.app/Automation",
-  "version": "24.06.1",
+  "version": "24.7.1",
   "scripts": {
     "build": "rm -rf dist/; tsc",
     "lint": "eslint src",
     "test": "./scripts/test.sh",
     "prepublishOnly": "npm run build",
-    "upgrade": "ncu -f '@digital-alchemy/*' -u; npm i"
+    "upgrade": "yarn up '@digital-alchemy/*'"
   },
   "author": {
     "url": "https://github.com/zoe-codez",
@@ -25,14 +25,19 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@digital-alchemy/core": "^24.6.1",
-    "@digital-alchemy/hass": "^24.6.2",
-    "@digital-alchemy/synapse": "^24.6.1",
     "dayjs": "^1.11.10",
     "prom-client": "^15.1.1"
   },
+  "peerDependencies": {
+    "@digital-alchemy/core": "*",
+    "@digital-alchemy/hass": "*",
+    "@digital-alchemy/synapse": "*"
+  },
   "devDependencies": {
     "@cspell/eslint-plugin": "^8.7.0",
+    "@digital-alchemy/core": "^24.7.2",
+    "@digital-alchemy/hass": "^24.7.6",
+    "@digital-alchemy/synapse": "^24.7.2",
     "@types/figlet": "^1.5.8",
     "@types/jest": "^29.5.12",
     "@types/js-yaml": "^4.0.9",
@@ -62,5 +67,6 @@
     "tsx": "^4.7.2",
     "type-fest": "^4.15.0",
     "typescript": "^5.4.5"
-  }
+  },
+  "packageManager": "yarn@4.3.1"
 }

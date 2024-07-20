@@ -72,7 +72,7 @@ export function AggressiveScenes({
         await each(
           attributes.entity_id as PICK_ENTITY<"switch">[],
           async child_id => {
-            const child = hass.entity.byId(child_id);
+            const child = hass.refBy.id(child_id);
             if (!child) {
               logger.warn(
                 { name: manageSwitch },
@@ -158,7 +158,7 @@ export function AggressiveScenes({
     }
     const entities = Object.keys(scene.definition) as PICK_ENTITY[];
     await each(entities, async entity_id => {
-      const entity = hass.entity.byId(entity_id);
+      const entity = hass.refBy.id(entity_id);
       if (!entity) {
         // * Home assistant outright does not send an entity for this id
         // The wrong id was probably input
