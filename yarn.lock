@@ -924,9 +924,9 @@ __metadata:
   resolution: "@digital-alchemy/automation@workspace:."
   dependencies:
     "@cspell/eslint-plugin": "npm:^8.7.0"
-    "@digital-alchemy/core": "npm:^24.7.2"
-    "@digital-alchemy/hass": "npm:^24.7.6"
-    "@digital-alchemy/synapse": "npm:^24.7.2"
+    "@digital-alchemy/core": "npm:^24.8.4"
+    "@digital-alchemy/hass": "npm:^24.8.1"
+    "@digital-alchemy/synapse": "npm:^24.8.1"
     "@types/figlet": "npm:^1.5.8"
     "@types/jest": "npm:^29.5.12"
     "@types/js-yaml": "npm:^4.0.9"
@@ -965,9 +965,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@digital-alchemy/core@npm:^24.7.2":
-  version: 24.7.2
-  resolution: "@digital-alchemy/core@npm:24.7.2"
+"@digital-alchemy/core@npm:^24.8.4":
+  version: 24.8.4
+  resolution: "@digital-alchemy/core@npm:24.8.4"
   dependencies:
     chalk: "npm:^5.3.0"
     dayjs: "npm:^1.11.11"
@@ -982,7 +982,7 @@ __metadata:
   dependenciesMeta:
     redis:
       optional: true
-  checksum: 10/d45c39883df79ed85e1245bce833db9147d8749282e985ab0258e77989e2cf1dd6ebe62a6f8e2018ba1c5d9890b60bf03515a4d8f0b220229185a4790cbde9db
+  checksum: 10/51e44d5d3fd104c129e1233f73c16ad65c8471213893f655b93a25e342f1342dab52237187452752be046605e3da1df5e6eb811fdfddf7a2537e912dc58348ae
   languageName: node
   linkType: hard
 
@@ -1002,9 +1002,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@digital-alchemy/hass@npm:^24.7.6":
-  version: 24.7.6
-  resolution: "@digital-alchemy/hass@npm:24.7.6"
+"@digital-alchemy/hass@npm:^24.8.1":
+  version: 24.8.1
+  resolution: "@digital-alchemy/hass@npm:24.8.1"
   dependencies:
     dayjs: "npm:^1.11.11"
     prom-client: "npm:^15.1.2"
@@ -1015,13 +1015,13 @@ __metadata:
     "@digital-alchemy/core": "*"
   bin:
     mock-assistant: dist/mock_assistant/main.js
-  checksum: 10/3270c2fbf43d1afae8ecbfe6ce411ccf66b99bb28a7e720efc4e148795579ad4b2de082b7a8b2d717ca1ad25e6af979ca3633c6dac4e4e4212a586f40008a1b1
+  checksum: 10/37089e362659a6eb695bbb71466c2b8a8469391baa03df6221ba15eb30738d9f330dc6cef62bdc4124eb0f415f2be1569e484c0f8beb1398dec6605119e85ba0
   languageName: node
   linkType: hard
 
-"@digital-alchemy/synapse@npm:^24.7.2":
-  version: 24.7.2
-  resolution: "@digital-alchemy/synapse@npm:24.7.2"
+"@digital-alchemy/synapse@npm:^24.8.1":
+  version: 24.8.1
+  resolution: "@digital-alchemy/synapse@npm:24.8.1"
   dependencies:
     "@digital-alchemy/fastify-extension": "npm:*"
     better-sqlite3: "npm:^11.0.0"
@@ -1033,7 +1033,7 @@ __metadata:
   dependenciesMeta:
     "@digital-alchemy/fastify-extension":
       optional: true
-  checksum: 10/2ee412ee081d21b4db1501e3c7d71302f04b1b1a7cc6102e5151376eb8811d487a833be6d01f7e4c459c12f2e960fe4fe251298b86194dfb463ad50ec0f525d1
+  checksum: 10/df0957537cdede94bca0bdeb0d83de4e856ed5205958302ace41baf55f0fa5e3fb442d95a7fe433b6fde7e73ede97cb3350463603890e19ff422614980c6b2b1
   languageName: node
   linkType: hard
 

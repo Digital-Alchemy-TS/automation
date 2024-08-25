@@ -28,9 +28,9 @@ export const LIB_AUTOMATION = CreateLibrary({
       type: "number",
     },
     CIRCADIAN_ENABLED: {
-      default: true,
+      default: false,
       description:
-        "Take responsibility for generating [CIRCADIAN_SENSOR] and emitting updates",
+        "Take responsibility for generating [CIRCADIAN_SENSOR_NAME] and emitting updates",
       type: "boolean",
     },
     CIRCADIAN_MAX_TEMP: {
