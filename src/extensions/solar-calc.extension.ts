@@ -86,7 +86,7 @@ type OnSolarEvent = {
 type SolarReference = Record<SolarEvents, Dayjs> & {
   isBetween: (a: SolarEvents, b: SolarEvents) => boolean;
   loaded: boolean;
-  onEvent: (options: OnSolarEvent) => TBlackHole;
+  onEvent: (options: OnSolarEvent) => { remove: () => TBlackHole };
 };
 
 /**
