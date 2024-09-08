@@ -269,12 +269,13 @@ export function SolarCalculator({
     exec,
     offset,
   }: OnSolarEvent) => {
-    scheduler.sliding({
+    const remove = scheduler.sliding({
       exec: async () => await exec(),
       label,
       next: () => getNextTime(eventName, offset, label),
       reset: CronExpression.EVERY_DAY_AT_MIDNIGHT,
     });
+    return { remove };
   };
 
   return solarReference as SolarReference;
