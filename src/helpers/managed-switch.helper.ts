@@ -33,7 +33,7 @@ export interface ManagedSwitchOptions {
    *
    * Default: EVERY_10_MINUTES
    */
-  schedule?: CronExpression | `${CronExpression}` | string;
+  schedule?: CronExpression | string;
   /**
    * Check on update of this entity
    */

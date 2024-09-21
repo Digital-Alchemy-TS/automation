@@ -29,7 +29,6 @@ const solarEvents = [
   "solarNoon",
 ] as SolarEvents[];
 
-
 const degreesBelowHorizon = {
   goldenHour: -6,
   nauticalTwilight: 12,
@@ -80,7 +79,7 @@ type SolarReference = Record<SolarEvents, Dayjs> & {
 /**
  * Benefits from a persistent cache, like Redis
  */
-export function SolarCalculator({ logger,  scheduler, hass, lifecycle }: TServiceParams) {
+export function SolarCalculator({ logger, scheduler, hass, lifecycle }: TServiceParams) {
   let config: HassConfig;
   const event = new EventEmitter();
   event.setMaxListeners(UNLIMITED);
@@ -101,18 +100,18 @@ export function SolarCalculator({ logger,  scheduler, hass, lifecycle }: TServic
   // Rebuild references hourly
   //
   scheduler.cron({
-    exec: () => PopulateReferences(),
+    exec: () => populateReferences(),
     schedule: CronExpression.EVERY_HOUR,
   });
 
   async function updateLocation() {
     config = await hass.fetch.getConfig();
-    PopulateReferences();
+    populateReferences();
   }
 
   const solarReference: Partial<SolarReference> = {};
 
-  async function PopulateReferences() {
+  async function populateReferences() {
     solarReference.dawn = dayjs(
       calcSunriseSet(true, degreesBelowHorizon.twilight, config.latitude, config.longitude),
     );

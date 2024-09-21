@@ -1,11 +1,6 @@
 import { is, sleep, START, TServiceParams } from "@digital-alchemy/core";
 
-import {
-  ActiveWatcher,
-  GenericFilter,
-  SequenceWatchOptions,
-  TrackedOptions,
-} from "..";
+import { ActiveWatcher, GenericFilter, SequenceWatchOptions, TrackedOptions } from "..";
 
 export function SequenceWatcher({ logger, hass, config, internal }: TServiceParams) {
   const ACTIVE = new Map<object, ActiveWatcher>();
@@ -104,10 +99,7 @@ export function SequenceWatcher({ logger, hass, config, internal }: TServicePara
         event_type,
         exec: () => {
           logger.trace({ context, label, match, name: SequenceWatcher }, `sequence match trigger`);
-          setImmediate(
-            async () =>
-              await internal.safeExec(async () => await exec()),
-          );
+          setImmediate(async () => await internal.safeExec(async () => await exec()));
         },
         filter: filter as GenericFilter,
         id,
