@@ -3,8 +3,7 @@ import { PICK_ENTITY } from "@digital-alchemy/hass";
 
 export const LOCATION_UPDATED = "LOCATION_UPDATED";
 
-export const SCENE_CHANGE = <T extends string = string>(room: T) =>
-  `SCENE_CHANGE:${room}`;
+export const SCENE_CHANGE = <T extends string = string>(room: T) => `SCENE_CHANGE:${room}`;
 export const SCENE_SET_ENTITY = "SCENE_SET_ENTITY";
 export const ANIMATION_INTERRUPT = "ANIMATION_INTERRUPT";
 export const DETERMINISTIC_SWITCH_CHANGED = "DETERMINISTIC_SWITCH_CHANGED";

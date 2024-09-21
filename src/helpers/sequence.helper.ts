@@ -1,9 +1,6 @@
 import { sleep, TBlackHole, TContext } from "@digital-alchemy/core";
 
-export type SequenceWatchOptions<
-  DATA extends object = object,
-  MATCH extends string = string,
-> = {
+export type SequenceWatchOptions<DATA extends object = object, MATCH extends string = string> = {
   /**
    * Additional log context
    */

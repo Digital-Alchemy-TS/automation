@@ -15,29 +15,14 @@ import {
   TAreaId,
 } from "@digital-alchemy/hass";
 
-import {
-  RoomConfiguration,
-  RoomScene,
-  SceneDefinition,
-  SceneLightState,
-} from "..";
+import { RoomConfiguration, RoomScene, SceneDefinition, SceneLightState } from "..";
 
-function toHassId<DOMAIN extends ALL_DOMAINS>(
-  domain: DOMAIN,
-  ...parts: string[]
-) {
-  const name = parts
-    .join(" ")
-    .toLowerCase()
-    .replaceAll(/\s+/g, "_")
-    .replaceAll(/\W/g, "");
+function toHassId<DOMAIN extends ALL_DOMAINS>(domain: DOMAIN, ...parts: string[]) {
+  const name = parts.join(" ").toLowerCase().replaceAll(/\s+/g, "_").replaceAll(/\W/g, "");
   return `${domain}.${name}` as PICK_ENTITY<DOMAIN>;
 }
 
-export type RoomDefinition<
-  SCENES extends string = string,
-  ROOM extends TAreaId = TAreaId,
-> = {
+export type RoomDefinition<SCENES extends string = string, ROOM extends TAreaId = TAreaId> = {
   scene: SCENES;
   currentSceneDefinition: RoomScene<ROOM>;
   currentSceneEntity: ByIdProxy<PICK_ENTITY<"sensor">>;
@@ -56,7 +41,6 @@ export function Room({
   automation,
   context: parentContext,
 }: TServiceParams) {
-  // eslint-disable-next-line sonarjs/cognitive-complexity
   return function <SCENES extends string, ROOM extends TAreaId>({
     area: name,
     context,
@@ -95,34 +79,25 @@ export function Room({
      *  - is a light, that is currently on
      *  - the light was recently turned off (<5s)
      */
-    function shouldCircadian(
-      entity_id: PICK_ENTITY<"light">,
-      target?: string,
-    ): boolean {
+    function shouldCircadian(entity_id: PICK_ENTITY<"light">, target?: string): boolean {
       if (!is.domain(entity_id, "light")) {
         return false;
       }
       if (!is.empty(target) && target !== "on") {
         return false;
       }
-      const current = (scenes[
-        currentScene.storage.get("current_option") as SCENES
-      ] ?? {}) as RoomScene<ROOM>;
+      const current = (scenes[currentScene.storage.get("current_option") as SCENES] ??
+        {}) as RoomScene<ROOM>;
       const definition = current.definition;
       if (entity_id in definition) {
         const state = definition[entity_id] as SceneLightState;
-        return Object.keys(state).every(i =>
-          ["state", "brightness"].includes(i),
-        );
+        return Object.keys(state).every(i => ["state", "brightness"].includes(i));
       }
       return true;
     }
 
     function dynamicProperties(sceneName: SCENES) {
-      const { definition } = scenes[sceneName] as RoomScene<
-        ROOM,
-        SceneDefinition<ROOM>
-      >;
+      const { definition } = scenes[sceneName] as RoomScene<ROOM, SceneDefinition<ROOM>>;
       if (!is.object(definition)) {
         return { lights: {}, scene: {} };
       }
@@ -146,12 +121,8 @@ export function Room({
         .filter(i => !is.undefined(i));
 
       return {
-        lights: Object.fromEntries(
-          list.filter(i => !is.undefined((i[VALUE] as HasKelvin).kelvin)),
-        ),
-        scene: Object.fromEntries(
-          list.filter(i => is.undefined((i[VALUE] as HasKelvin).kelvin)),
-        ),
+        lights: Object.fromEntries(list.filter(i => !is.undefined((i[VALUE] as HasKelvin).kelvin))),
+        scene: Object.fromEntries(list.filter(i => is.undefined((i[VALUE] as HasKelvin).kelvin))),
       };
     }
 

@@ -26,8 +26,9 @@ type EntitySceneType<DOMAIN extends SceneAwareDomains> = {
   switch: { state: "on" | "off" };
 }[DOMAIN];
 
-export type tSceneType<ENTITY extends PICK_ENTITY<SceneAwareDomains>> =
-  EntitySceneType<GetDomain<ENTITY>>;
+export type tSceneType<ENTITY extends PICK_ENTITY<SceneAwareDomains>> = EntitySceneType<
+  GetDomain<ENTITY>
+>;
 
 export type tScene = {
   [key in PICK_ENTITY<SceneAwareDomains>]: tSceneType<key>;
@@ -44,10 +45,7 @@ export interface AutomationLogicModuleConfiguration<
   room_configuration?: Record<string, RoomConfiguration<SCENES, ROOM>>;
 }
 
-export type AllowedSceneDomains = Extract<
-  ALL_DOMAINS,
-  "switch" | "light" | "fan"
->;
+export type AllowedSceneDomains = Extract<ALL_DOMAINS, "switch" | "light" | "fan">;
 
 export const SCENE_ROOM_OPTIONS = "scene-room";
 
@@ -75,10 +73,10 @@ type MappedDomains = {
 };
 
 export type SceneDefinition<AREA extends TAreaId> = Partial<{
-  [entity_id in PICK_FROM_AREA<
-    AREA,
+  [entity_id in PICK_FROM_AREA<AREA, keyof MappedDomains>]: MappedDomains[Extract<
+    GetDomain<entity_id>,
     keyof MappedDomains
-  >]: MappedDomains[Extract<GetDomain<entity_id>, keyof MappedDomains>];
+  >];
 }>;
 
 export type SceneList<AREA extends TAreaId, SCENES extends string> = Record<
@@ -123,7 +121,5 @@ export type RoomScene<
    * Human understandable description of this scene (short form)
    */
   friendly_name?: string;
-  definition: REGISTRY_SETUP["area"][`_${AREA}`] extends never
-    ? never
-    : DEFINITION;
+  definition: REGISTRY_SETUP["area"][`_${AREA}`] extends never ? never : DEFINITION;
 };

@@ -6,5 +6,9 @@ words:
   - hass
   - sonarjs
   - mireds
+  - unitless
+  - mrad
+  - sinm
+  - julianday
 ignoreWords: []
 import: []

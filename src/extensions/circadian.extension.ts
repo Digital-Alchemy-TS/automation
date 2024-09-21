@@ -52,9 +52,7 @@ export function CircadianLighting({
     circadianEntity.storage.set(
       "state",
       Math.floor(
-        (config.automation.CIRCADIAN_MAX_TEMP -
-          config.automation.CIRCADIAN_MIN_TEMP) *
-          offset +
+        (config.automation.CIRCADIAN_MAX_TEMP - config.automation.CIRCADIAN_MIN_TEMP) * offset +
           config.automation.CIRCADIAN_MIN_TEMP,
       ),
     );
@@ -80,15 +78,11 @@ export function CircadianLighting({
     }
     if (now.isBefore(solarNoon)) {
       // After dawn, but before solar noon
-      return Math.abs(
-        solarNoon.diff(now, "s") / solarNoon.diff(dawn, "s") - MAX,
-      );
+      return Math.abs(solarNoon.diff(now, "s") / solarNoon.diff(dawn, "s") - MAX);
     }
     if (now.isBefore(dusk)) {
       // Afternoon, but before dusk
-      return Math.abs(
-        solarNoon.diff(now, "s") / solarNoon.diff(dusk, "s") - MAX,
-      );
+      return Math.abs(solarNoon.diff(now, "s") / solarNoon.diff(dusk, "s") - MAX);
     }
     // Until midnight
     return MIN;

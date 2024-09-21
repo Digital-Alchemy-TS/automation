@@ -11,14 +11,7 @@
 const formatDate = function formatDate(date, minutes) {
   const seconds = (minutes - Math.floor(minutes)) * 60;
   return new Date(
-    Date.UTC(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate(),
-      0,
-      minutes,
-      seconds,
-    ),
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, minutes, seconds),
   );
 };
 
@@ -50,8 +43,7 @@ function calcDoyFromJD(jd) {
   const year = month > 2 ? C - 4716 : C - 4715;
 
   const k = isLeapYear(year) ? 1 : 2;
-  const doy =
-    Math.floor((275 * month) / 9) - k * Math.floor((month + 9) / 12) + day - 30;
+  const doy = Math.floor((275 * month) / 9) - k * Math.floor((month + 9) / 12) + day - 30;
   return doy;
 }
 
@@ -194,11 +186,7 @@ export function getJD(date: Date) {
   const A = Math.floor(year / 100);
   const B = 2 - A + Math.floor(A / 4);
   const JD =
-    Math.floor(365.25 * (year + 4716)) +
-    Math.floor(30.6001 * (month + 1)) +
-    day +
-    B -
-    1524.5;
+    Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + B - 1524.5;
   return JD;
 }
 
@@ -257,23 +245,12 @@ function calcSunriseSetUTC(rise, angle, JD, latitude, longitude) {
   return timeUTC;
 }
 
-export function calcSunriseSet(
-  rise: boolean,
-  angle: number,
-  latitude: number,
-  longitude: number,
-) {
+export function calcSunriseSet(rise: boolean, angle: number, latitude: number, longitude: number) {
   const date = new Date();
   const JD = getJD(date);
   // rise = 1 for sunrise, 0 for sunset
   const timeUTC = calcSunriseSetUTC(rise, angle, JD, latitude, longitude);
-  const newTimeUTC = calcSunriseSetUTC(
-    rise,
-    angle,
-    JD + timeUTC / 1440,
-    latitude,
-    longitude,
-  );
+  const newTimeUTC = calcSunriseSetUTC(rise, angle, JD + timeUTC / 1440, latitude, longitude);
   if (isNumber(newTimeUTC)) {
     return formatDate(date, newTimeUTC);
   } else {
@@ -285,38 +262,17 @@ export function calcSunriseSet(
       (latitude < -66.4 && (doy < 83 || doy > 263))
     ) {
       //previous sunrise/next sunset
-      jdy = calcJDofNextPreviousRiseSet(
-        !rise,
-        rise,
-        angle,
-        JD,
-        latitude,
-        longitude,
-      );
+      jdy = calcJDofNextPreviousRiseSet(!rise, rise, angle, JD, latitude, longitude);
       return dayString(jdy);
     } else {
       //previous sunset/next sunrise
-      jdy = calcJDofNextPreviousRiseSet(
-        rise,
-        rise,
-        angle,
-        JD,
-        latitude,
-        longitude,
-      );
+      jdy = calcJDofNextPreviousRiseSet(rise, rise, angle, JD, latitude, longitude);
       return dayString(jdy);
     }
   }
 }
 
-function calcJDofNextPreviousRiseSet(
-  next,
-  rise,
-  type,
-  JD,
-  latitude,
-  longitude,
-) {
+function calcJDofNextPreviousRiseSet(next, rise, type, JD, latitude, longitude) {
   let julianday = JD;
   const increment = next ? 1 : -1;
 

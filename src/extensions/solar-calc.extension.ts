@@ -1,16 +1,7 @@
-import {
-  CronExpression,
-  is,
-  TBlackHole,
-  TServiceParams,
-} from "@digital-alchemy/core";
+import { CronExpression, is, TBlackHole, TServiceParams } from "@digital-alchemy/core";
 import { HassConfig } from "@digital-alchemy/hass";
 import dayjs, { Dayjs } from "dayjs";
-import {
-  Duration,
-  DurationUnitsObjectType,
-  DurationUnitType,
-} from "dayjs/plugin/duration";
+import { Duration, DurationUnitsObjectType, DurationUnitType } from "dayjs/plugin/duration";
 import EventEmitter from "events";
 
 import { calcSolNoon, calcSunriseSet } from "..";
@@ -38,7 +29,6 @@ const solarEvents = [
   "solarNoon",
 ] as SolarEvents[];
 
-const CACHE_KEY = "SOLAR_CALC_CONFIG_CACHE";
 
 const degreesBelowHorizon = {
   goldenHour: -6,
@@ -50,9 +40,7 @@ const degreesBelowHorizon = {
 };
 const UNLIMITED = 0;
 type Part<CHAR extends string> = `${number}${CHAR}` | "";
-type ISO_8601_PARTIAL =
-  | `${Part<"H" | "h">}${Part<"M" | "m">}${Part<"S" | "s">}`
-  | "";
+type ISO_8601_PARTIAL = `${Part<"H" | "h">}${Part<"M" | "m">}${Part<"S" | "s">}` | "";
 
 export type OffsetTypes =
   | Duration
@@ -92,26 +80,16 @@ type SolarReference = Record<SolarEvents, Dayjs> & {
 /**
  * Benefits from a persistent cache, like Redis
  */
-export function SolarCalculator({
-  logger,
-  cache,
-  scheduler,
-  hass,
-  lifecycle,
-}: TServiceParams) {
+export function SolarCalculator({ logger,  scheduler, hass, lifecycle }: TServiceParams) {
   let config: HassConfig;
   const event = new EventEmitter();
   event.setMaxListeners(UNLIMITED);
   let lastEventAttachment: string;
 
   lifecycle.onBootstrap(async () => {
-    config = await cache.get(CACHE_KEY);
     if (!config) {
       // Hold up bootstrapping for it
-      logger.info(
-        { name: "onBootstrap" },
-        `no lat/long on hand, fetching from Home Assistant`,
-      );
+      logger.info({ name: "onBootstrap" }, `no lat/long on hand, fetching from Home Assistant`);
       await updateLocation();
       return;
     }
@@ -129,7 +107,6 @@ export function SolarCalculator({
 
   async function updateLocation() {
     config = await hass.fetch.getConfig();
-    await cache.set(CACHE_KEY, config);
     PopulateReferences();
   }
 
@@ -137,75 +114,35 @@ export function SolarCalculator({
 
   async function PopulateReferences() {
     solarReference.dawn = dayjs(
-      calcSunriseSet(
-        true,
-        degreesBelowHorizon.twilight,
-        config.latitude,
-        config.longitude,
-      ),
+      calcSunriseSet(true, degreesBelowHorizon.twilight, config.latitude, config.longitude),
     );
 
     solarReference.sunriseEnd = dayjs(
-      calcSunriseSet(
-        true,
-        degreesBelowHorizon.sunriseEnd,
-        config.latitude,
-        config.longitude,
-      ),
+      calcSunriseSet(true, degreesBelowHorizon.sunriseEnd, config.latitude, config.longitude),
     );
 
     solarReference.sunsetStart = dayjs(
-      calcSunriseSet(
-        false,
-        degreesBelowHorizon.sunriseEnd,
-        config.latitude,
-        config.longitude,
-      ),
+      calcSunriseSet(false, degreesBelowHorizon.sunriseEnd, config.latitude, config.longitude),
     );
 
     solarReference.dusk = dayjs(
-      calcSunriseSet(
-        false,
-        degreesBelowHorizon.twilight,
-        config.latitude,
-        config.longitude,
-      ),
+      calcSunriseSet(false, degreesBelowHorizon.twilight, config.latitude, config.longitude),
     );
 
     solarReference.nightStart = dayjs(
-      calcSunriseSet(
-        false,
-        degreesBelowHorizon.night,
-        config.latitude,
-        config.longitude,
-      ),
+      calcSunriseSet(false, degreesBelowHorizon.night, config.latitude, config.longitude),
     );
 
     solarReference.nightEnd = dayjs(
-      calcSunriseSet(
-        true,
-        degreesBelowHorizon.night,
-        config.latitude,
-        config.longitude,
-      ),
+      calcSunriseSet(true, degreesBelowHorizon.night, config.latitude, config.longitude),
     );
 
     solarReference.sunrise = dayjs(
-      calcSunriseSet(
-        true,
-        degreesBelowHorizon.sunrise,
-        config.latitude,
-        config.longitude,
-      ),
+      calcSunriseSet(true, degreesBelowHorizon.sunrise, config.latitude, config.longitude),
     );
 
     solarReference.sunset = dayjs(
-      calcSunriseSet(
-        false,
-        degreesBelowHorizon.sunrise,
-        config.latitude,
-        config.longitude,
-      ),
+      calcSunriseSet(false, degreesBelowHorizon.sunrise, config.latitude, config.longitude),
     );
 
     solarReference.solarNoon = dayjs(calcSolNoon(config.longitude));
@@ -219,10 +156,7 @@ export function SolarCalculator({
         if (solarReference[i].isBefore(now)) {
           return;
         }
-        setTimeout(
-          () => event.emit(i),
-          Math.abs(now.diff(solarReference[i], "ms")),
-        );
+        setTimeout(() => event.emit(i), Math.abs(now.diff(solarReference[i], "ms")));
       });
     }
   }
@@ -258,20 +192,12 @@ export function SolarCalculator({
     if (is.number(offset)) {
       duration = dayjs.duration(offset, "ms");
     }
-    return duration
-      ? solarReference[eventName].add(duration)
-      : solarReference[eventName];
+    return duration ? solarReference[eventName].add(duration) : solarReference[eventName];
   }
 
-  solarReference.onEvent = ({
-    eventName,
-    label,
-    exec,
-    offset,
-  }: OnSolarEvent) => {
+  solarReference.onEvent = ({ eventName, label, exec, offset }: OnSolarEvent) => {
     const remove = scheduler.sliding({
       exec: async () => await exec(),
-      label,
       next: () => getNextTime(eventName, offset, label),
       reset: CronExpression.EVERY_DAY_AT_MIDNIGHT,
     });
@@ -281,8 +207,6 @@ export function SolarCalculator({
   return solarReference as SolarReference;
 }
 
-function isDuration(
-  item: Duration | DurationUnitsObjectType,
-): item is Duration {
+function isDuration(item: Duration | DurationUnitsObjectType): item is Duration {
   return typeof item.days === "function";
 }
