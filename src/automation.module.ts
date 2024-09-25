@@ -35,22 +35,17 @@ export const LIB_AUTOMATION = CreateLibrary({
     },
     CIRCADIAN_MAX_TEMP: {
       default: 5500,
-      description:
-        "Maximum color temperature for circadian lighting. Used at solar noon",
+      description: "Maximum color temperature for circadian lighting. Used at solar noon",
       type: "number",
     },
     CIRCADIAN_MIN_TEMP: {
       default: 2000,
-      description:
-        "Minimum color temperature for circadian lighting. Used while it's dark out",
+      description: "Minimum color temperature for circadian lighting. Used while it's dark out",
       type: "number",
     },
     CIRCADIAN_RATE: {
       default: 3,
-      description: [
-        "Number of entities to adjust at the same time",
-        "Higher values increase load",
-      ],
+      description: ["Number of entities to adjust at the same time", "Higher values increase load"],
       type: "number",
     },
     CIRCADIAN_SENSOR_NAME: {

@@ -1,21 +1,8 @@
 import { is, sleep, START, TServiceParams } from "@digital-alchemy/core";
 
-import {
-  ActiveWatcher,
-  GenericFilter,
-  SEQUENCE_MATCHER_ERRORS,
-  SEQUENCE_MATCHER_EXECUTION_COUNT,
-  SEQUENCE_MATCHER_EXECUTION_TIME,
-  SequenceWatchOptions,
-  TrackedOptions,
-} from "..";
+import { ActiveWatcher, GenericFilter, SequenceWatchOptions, TrackedOptions } from "..";
 
-export function SequenceWatcher({
-  logger,
-  hass,
-  config,
-  internal,
-}: TServiceParams) {
+export function SequenceWatcher({ logger, hass, config, internal }: TServiceParams) {
   const ACTIVE = new Map<object, ActiveWatcher>();
   const WATCHED_EVENTS = new Map<string, TrackedOptions[]>();
   const EVENT_REMOVAL = new Map<string, () => void>();
@@ -83,15 +70,11 @@ export function SequenceWatcher({
     });
   }
 
-  function SequenceWatcher<
-    DATA extends object = object,
-    MATCH extends string = string,
-  >(data: SequenceWatchOptions<DATA, MATCH>) {
+  function SequenceWatcher<DATA extends object = object, MATCH extends string = string>(
+    data: SequenceWatchOptions<DATA, MATCH>,
+  ) {
     const { exec, event_type, match, context, label, path, filter } = data;
-    logger.trace(
-      { context, name: SequenceWatcher },
-      `setting up sequence watcher`,
-    );
+    logger.trace({ context, name: SequenceWatcher }, `setting up sequence watcher`);
     const id = counter.toString();
     counter++;
 
@@ -99,15 +82,11 @@ export function SequenceWatcher({
     let watcher = WATCHED_EVENTS.get(event_type);
     if (!watcher) {
       watcher = [];
-      logger.trace(
-        { event_type, name: SequenceWatcher },
-        `listening for socket event`,
-      );
+      logger.trace({ event_type, name: SequenceWatcher }, `listening for socket event`);
       const remover = hass.socket.onEvent({
         context,
         event: event_type,
         exec: eventData => trigger(event_type, eventData),
-        label,
       });
       EVENT_REMOVAL.set(event_type, remover);
     }
@@ -119,20 +98,8 @@ export function SequenceWatcher({
         context,
         event_type,
         exec: () => {
-          logger.trace(
-            { context, label, match, name: SequenceWatcher },
-            `sequence match trigger`,
-          );
-          setImmediate(
-            async () =>
-              await internal.safeExec({
-                duration: SEQUENCE_MATCHER_EXECUTION_TIME,
-                errors: SEQUENCE_MATCHER_ERRORS,
-                exec: async () => await exec(),
-                executions: SEQUENCE_MATCHER_EXECUTION_COUNT,
-                labels: { context, label },
-              }),
-          );
+          logger.trace({ context, label, match, name: SequenceWatcher }, `sequence match trigger`);
+          setImmediate(async () => await internal.safeExec(async () => await exec()));
         },
         filter: filter as GenericFilter,
         id,
@@ -144,9 +111,7 @@ export function SequenceWatcher({
 
     // Return a removal function
     return () => {
-      const watcher = WATCHED_EVENTS.get(event_type).filter(
-        item => item.id !== id,
-      );
+      const watcher = WATCHED_EVENTS.get(event_type).filter(item => item.id !== id);
       if (is.empty(watcher)) {
         logger.debug(
           { event_type, name: SequenceWatcher },

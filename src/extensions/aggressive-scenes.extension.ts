@@ -1,11 +1,5 @@
 import { each, is, TContext, TServiceParams } from "@digital-alchemy/core";
-import {
-  domain,
-  ENTITY_STATE,
-  PICK_ENTITY,
-  PICK_FROM_AREA,
-  TAreaId,
-} from "@digital-alchemy/hass";
+import { domain, ENTITY_STATE, PICK_ENTITY, PICK_FROM_AREA, TAreaId } from "@digital-alchemy/hass";
 
 import {
   AGGRESSIVE_SCENES_ADJUSTMENT,
@@ -22,18 +16,11 @@ type TValidateOptions<ROOM extends TAreaId> = {
   scene: RoomScene<ROOM>;
 };
 
-export function AggressiveScenes({
-  logger,
-  config,
-  hass,
-  event,
-  automation,
-}: TServiceParams) {
-  // eslint-disable-next-line sonarjs/cognitive-complexity
-  async function manageSwitch<
-    ROOM extends TAreaId,
-    SCENE extends SceneDefinition<ROOM>,
-  >(entity: ENTITY_STATE<PICK_FROM_AREA<ROOM, "switch">>, scene: SCENE) {
+export function AggressiveScenes({ logger, config, hass, event, automation }: TServiceParams) {
+  async function manageSwitch<ROOM extends TAreaId, SCENE extends SceneDefinition<ROOM>>(
+    entity: ENTITY_STATE<PICK_FROM_AREA<ROOM, "switch">>,
+    scene: SCENE,
+  ) {
     const entity_id = entity.entity_id as PICK_FROM_AREA<ROOM, "switch">;
     const expected = scene[
       entity_id as Extract<keyof SCENE, PICK_FROM_AREA<ROOM, "switch">>
@@ -43,18 +30,12 @@ export function AggressiveScenes({
       return;
     }
     if (entity.state === "unavailable") {
-      logger.warn(
-        { entity_id, name: manageSwitch },
-        `{unavailable} entity, cannot manage state`,
-      );
+      logger.warn({ entity_id, name: manageSwitch }, `{unavailable} entity, cannot manage state`);
       return;
     }
     let performedUpdate = false;
     if (entity.state !== expected.state) {
-      await matchSwitchToScene(
-        entity as ENTITY_STATE<PICK_FROM_AREA<ROOM, "switch">>,
-        expected,
-      );
+      await matchSwitchToScene(entity as ENTITY_STATE<PICK_FROM_AREA<ROOM, "switch">>, expected);
       performedUpdate = true;
     }
     if (performedUpdate) {
@@ -69,35 +50,32 @@ export function AggressiveScenes({
       // ? This is a group
       const id = attributes.entity_id;
       if (is.array(id) && !is.empty(id)) {
-        await each(
-          attributes.entity_id as PICK_ENTITY<"switch">[],
-          async child_id => {
-            const child = hass.refBy.id(child_id);
-            if (!child) {
-              logger.warn(
-                { name: manageSwitch },
-                `%s => %s child entity of group cannot be found`,
-                entity_id,
-                child_id,
-              );
-              return;
-            }
-            if (child.state === "unavailable") {
-              logger.warn(
-                { child_id, name: manageSwitch },
-                `{unavailable} entity, cannot manage state`,
-              );
-              return;
-            }
-            if (child.state !== expected.state) {
-              await matchSwitchToScene<ROOM>(
-                // @ts-expect-error wtf
-                child as ENTITY_STATE<PICK_FROM_AREA<ROOM, "switch">>,
-                expected,
-              );
-            }
-          },
-        );
+        await each(attributes.entity_id as PICK_ENTITY<"switch">[], async child_id => {
+          const child = hass.refBy.id(child_id);
+          if (!child) {
+            logger.warn(
+              { name: manageSwitch },
+              `%s => %s child entity of group cannot be found`,
+              entity_id,
+              child_id,
+            );
+            return;
+          }
+          if (child.state === "unavailable") {
+            logger.warn(
+              { child_id, name: manageSwitch },
+              `{unavailable} entity, cannot manage state`,
+            );
+            return;
+          }
+          if (child.state !== expected.state) {
+            await matchSwitchToScene<ROOM>(
+              // @ts-expect-error wtf
+              child as ENTITY_STATE<PICK_FROM_AREA<ROOM, "switch">>,
+              expected,
+            );
+          }
+        });
       }
     }
   }
@@ -107,10 +85,7 @@ export function AggressiveScenes({
     expected: SceneSwitchState,
   ) {
     const entity_id = entity.entity_id;
-    logger.debug(
-      { entity_id, name: matchSwitchToScene, state: expected.state },
-      `changing state`,
-    );
+    logger.debug({ entity_id, name: matchSwitchToScene, state: expected.state }, `changing state`);
     event.emit(AGGRESSIVE_SCENES_ADJUSTMENT, {
       entity_id,
       type: "switch_on_off",
@@ -135,10 +110,7 @@ export function AggressiveScenes({
     name,
     context,
   }: TValidateOptions<ROOM>): Promise<void> {
-    if (
-      config.automation.AGGRESSIVE_SCENES === false ||
-      scene?.aggressive === false
-    ) {
+    if (config.automation.AGGRESSIVE_SCENES === false || scene?.aggressive === false) {
       // nothing to do
       return;
     }
@@ -164,10 +136,7 @@ export function AggressiveScenes({
         // The wrong id was probably input
         //
         // ? This is distinct from "unavailable" entities
-        logger.error(
-          { entity_id, name: validateRoomScene },
-          `cannot find entity`,
-        );
+        logger.error({ entity_id, name: validateRoomScene }, `cannot find entity`);
         return;
       }
       const entityDomain = domain(entity_id);
@@ -183,11 +152,7 @@ export function AggressiveScenes({
           await manageSwitch(item, scene.definition);
           return;
         default:
-          logger.debug(
-            { name: validateRoomScene },
-            `{%s} no actions set for domain`,
-            entityDomain,
-          );
+          logger.debug({ name: validateRoomScene }, `{%s} no actions set for domain`, entityDomain);
       }
     });
   }

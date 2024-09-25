@@ -1,19 +1,8 @@
-import {
-  CronExpression,
-  is,
-  SINGLE,
-  TContext,
-  TServiceParams,
-} from "@digital-alchemy/core";
+import { CronExpression, is, SINGLE, TContext, TServiceParams } from "@digital-alchemy/core";
 
 import { ManagedSwitchOptions, PickASwitch } from "../helpers";
 
-export function ManagedSwitch({
-  logger,
-  hass,
-  scheduler,
-  lifecycle,
-}: TServiceParams) {
+export function ManagedSwitch({ logger, hass, scheduler, lifecycle }: TServiceParams) {
   /**
    * Logic runner for the state enforcer
    */
@@ -32,9 +21,7 @@ export function ManagedSwitch({
     }
     // Annotation can be used on property getter, or directly on a plain property (that some other logic updates)
     const action = current ? "turn_on" : "turn_off";
-    const entity_id = [switches]
-      .flat()
-      .map(i => (is.string(i) ? i : i.entity_id));
+    const entity_id = [switches].flat().map(i => (is.string(i) ? i : i.entity_id));
 
     const shouldExecute = entity_id.some(
       id => !action.includes(hass.refBy.id(id)?.state?.toLocaleLowerCase()),
@@ -51,7 +38,6 @@ export function ManagedSwitch({
     await hass.call.switch[action]({ entity_id });
   }
 
-  // eslint-disable-next-line sonarjs/cognitive-complexity
   function ManageSwitch({
     context,
     entity_id,
@@ -60,10 +46,7 @@ export function ManagedSwitch({
     onUpdate = [],
   }: ManagedSwitchOptions) {
     lifecycle.onReady(() => {
-      logger.trace(
-        { context, entity_id, name: ManageSwitch },
-        `setting up managed switch`,
-      );
+      logger.trace({ context, entity_id, name: ManageSwitch }, `setting up managed switch`);
       const entityList = is.array(entity_id) ? entity_id : [entity_id];
 
       // * Check if there should be a change
@@ -96,9 +79,7 @@ export function ManagedSwitch({
             i.onUpdate(async () => await update());
             return;
           }
-          hass.refBy
-            .id(is.object(i) ? i.entity_id : i)
-            .onUpdate(async () => await update());
+          hass.refBy.id(is.object(i) ? i.entity_id : i).onUpdate(async () => await update());
         });
       }
     });

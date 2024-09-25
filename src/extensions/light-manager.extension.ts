@@ -96,10 +96,7 @@ export function LightManager({
       return;
     }
     if (String(entity.state) === "unavailable") {
-      logger.warn(
-        { entity_id, name: manageLight },
-        `entity is unavailable, cannot manage state`,
-      );
+      logger.warn({ entity_id, name: manageLight }, `entity is unavailable, cannot manage state`);
       return;
     }
     const performedUpdate = await matchToScene(entity, expected);
@@ -127,9 +124,7 @@ export function LightManager({
     }
   }
 
-  function getCurrentDiff({
-    attributes,
-  }: ColorLight | ByIdProxy<PICK_ENTITY<"light">>) {
+  function getCurrentDiff({ attributes }: ColorLight | ByIdProxy<PICK_ENTITY<"light">>) {
     if (!attributes.supported_color_modes.includes("color_temp")) {
       return NONE;
     }
@@ -142,10 +137,7 @@ export function LightManager({
       attributes.max_color_temp_kelvin ?? NONE,
     );
     const kelvin = attributes.color_temp_kelvin;
-    const target = Math.min(
-      max,
-      Math.max(automation.circadian.getKelvin(), min),
-    );
+    const target = Math.min(max, Math.max(automation.circadian.getKelvin(), min));
     return Math.abs(kelvin - target);
   }
 
@@ -198,16 +190,12 @@ export function LightManager({
    *
    * If they don't match, then issue a `turn_on` call, and log a message
    */
-  async function manageLightColor(
-    entity: ColorLight,
-    state: SceneLightStateOn,
-  ): Promise<boolean> {
+  async function manageLightColor(entity: ColorLight, state: SceneLightStateOn): Promise<boolean> {
     const stateTests = {
       brightness: entity.attributes.brightness == state.brightness,
       color: entity.attributes.rgb_color.every(
         (color: number, index: number) =>
-          state.rgb_color[[..."rgb"][index] as keyof typeof state.rgb_color] ===
-          color,
+          state.rgb_color[[..."rgb"][index] as keyof typeof state.rgb_color] === color,
       ),
       state: entity.state === "off",
     };
@@ -344,26 +332,18 @@ export function LightManager({
           stopped = true;
           earlyStop = undefined;
         };
-        await eachLimit(
-          list,
-          config.automation.CIRCADIAN_RATE,
-          async ({ light, diff }) => {
-            if (stopped) {
-              return;
-            }
-            logger.trace(
-              { diff, name: "onPostConfig" },
-              `{%s} adjusting light temperature`,
-              light,
-            );
-            await hass.call.light.turn_on({
-              entity_id: light,
-              kelvin: automation.circadian.getKelvin(),
-            });
-            complete++;
-            await sleep(config.automation.CIRCADIAN_THROTTLE);
-          },
-        );
+        await eachLimit(list, config.automation.CIRCADIAN_RATE, async ({ light, diff }) => {
+          if (stopped) {
+            return;
+          }
+          logger.trace({ diff, name: "onPostConfig" }, `{%s} adjusting light temperature`, light);
+          await hass.call.light.turn_on({
+            entity_id: light,
+            kelvin: automation.circadian.getKelvin(),
+          });
+          complete++;
+          await sleep(config.automation.CIRCADIAN_THROTTLE);
+        });
         earlyStop = undefined;
       },
       schedule: CronExpression.EVERY_30_SECONDS,
