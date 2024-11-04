@@ -2190,7 +2190,7 @@ __metadata:
     "@digital-alchemy/synapse": "npm:^24.9.4"
     "@eslint/compat": "npm:^1.1.1"
     "@eslint/eslintrc": "npm:^3.1.0"
-    "@eslint/js": "npm:^9.11.1"
+    "@eslint/js": "npm:^9.14.0"
     "@types/jest": "npm:^29.5.13"
     "@types/js-yaml": "npm:^4.0.9"
     "@types/node": "npm:^22.7.4"
@@ -2504,10 +2504,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eslint/js@npm:9.11.1, @eslint/js@npm:^9.11.1":
+"@eslint/js@npm:9.11.1":
   version: 9.11.1
   resolution: "@eslint/js@npm:9.11.1"
   checksum: 10/77b9c744bdf24e2ca1f99f671139767d6c31cb10d732cf22a85ef28f1f95f2a621cf204f572fd9fee67da6193ff2597a5d236cef3b557b07624230b622612339
+  languageName: node
+  linkType: hard
+
+"@eslint/js@npm:^9.14.0":
+  version: 9.14.0
+  resolution: "@eslint/js@npm:9.14.0"
+  checksum: 10/897e26bd68f898e56e96f85c92a1d823ef3d9f34e17d88d0ff40e88882ddae28d2f35915150c21cf640e0c64cb23703d0fbe6f7c9b9d6328aabe58ca30d9b4fe
   languageName: node
   linkType: hard
 
