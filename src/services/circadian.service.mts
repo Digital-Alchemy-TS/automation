@@ -1,7 +1,7 @@
 import { CronExpression, TServiceParams } from "@digital-alchemy/core";
 import dayjs from "dayjs";
 
-import { LOCATION_UPDATED } from "../helpers";
+import { LOCATION_UPDATED } from "../helpers/index.mts";
 
 const MIN = 0;
 const MAX = 1;

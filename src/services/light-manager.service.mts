@@ -19,13 +19,13 @@ import {
   TAreaId,
 } from "@digital-alchemy/hass";
 
-import { RoomDefinition } from "..";
 import {
   AggressiveScenesAdjustmentTypes,
   SceneDefinition,
   SceneLightState,
   SceneLightStateOn,
-} from "../helpers";
+} from "../helpers/index.mts";
+import { RoomDefinition } from "./room.service.mts";
 
 type ColorModes = "color_temp" | "xy" | "brightness";
 export type ColorLight = GenericEntityDTO<

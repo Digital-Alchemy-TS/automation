@@ -11,7 +11,7 @@ import {
   SequenceWatcher,
   SolarCalculator,
   Time,
-} from "./extensions";
+} from "./services/index.mts";
 
 export const LIB_AUTOMATION = CreateLibrary({
   configuration: {

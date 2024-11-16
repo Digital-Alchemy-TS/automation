@@ -1,6 +1,6 @@
 import { CronExpression, is, SINGLE, TContext, TServiceParams } from "@digital-alchemy/core";
 
-import { ManagedSwitchOptions, PickASwitch } from "../helpers";
+import { ManagedSwitchOptions, PickASwitch } from "../helpers/index.mts";
 
 export function ManagedSwitch({ logger, hass, scheduler, lifecycle }: TServiceParams) {
   /**

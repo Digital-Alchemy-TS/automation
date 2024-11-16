@@ -4,7 +4,7 @@ import dayjs, { Dayjs } from "dayjs";
 import { Duration, DurationUnitsObjectType, DurationUnitType } from "dayjs/plugin/duration";
 import EventEmitter from "events";
 
-import { calcSolNoon, calcSunriseSet } from "..";
+import { calcSolNoon, calcSunriseSet } from "../index.mts";
 
 export type SolarEvents =
   | "dawn"
