@@ -7,7 +7,7 @@ import {
   RoomScene,
   SceneDefinition,
   SceneSwitchState,
-} from "../helpers";
+} from "../helpers/index.mts";
 
 type TValidateOptions<ROOM extends TAreaId> = {
   context: TContext;

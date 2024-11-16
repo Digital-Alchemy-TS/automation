@@ -15,7 +15,12 @@ import {
   TAreaId,
 } from "@digital-alchemy/hass";
 
-import { RoomConfiguration, RoomScene, SceneDefinition, SceneLightState } from "..";
+import {
+  RoomConfiguration,
+  RoomScene,
+  SceneDefinition,
+  SceneLightState,
+} from "../helpers/index.mts";
 
 function toHassId<DOMAIN extends ALL_DOMAINS>(domain: DOMAIN, ...parts: string[]) {
   const name = parts.join(" ").toLowerCase().replaceAll(/\s+/g, "_").replaceAll(/\W/g, "");
