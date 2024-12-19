@@ -1,14 +1,16 @@
 import type { ByIdProxy, PICK_ENTITY } from '@digital-alchemy/hass'
-import type { Duration, UseTimerOutput } from '../helpers/timer.mjs'
+import { objectEntries, type Duration, type UseTimerOutput } from '../helpers/timer.mjs'
 import { InternalError, type TServiceParams } from '@digital-alchemy/core'
 
 export interface SceneDef {
-  name: string
+  id: string
+  friendlyName?: string
   on: Array<() => void>
   off?: Array<() => void>
   icon?: string
   isDefault?: boolean
   timeout?: Duration | (() => Duration)
+  // circadian?: 
 }
 export type ActivateSceneCondition = () => boolean
 
@@ -17,9 +19,10 @@ type Scenes = Map<string, SceneDef>
 
 export interface SceneControllerInput {
   ctx: TServiceParams
-  name: string
+  id: string
+  areaName?: string
   conditions?: ActivateSceneCondition[]
-  definitions: SceneDef[]
+  definitions: Record<string, SceneDef>
   /**
    * Default functiton to turn off scenes.
    * An off function in a scene definition will be used instead of this if defined.
@@ -31,7 +34,12 @@ export interface SceneControllerInput {
 }
 
 // overkill?
-interface SceneControllerOptions {
+export interface SceneControllerOptions {
+  // ui controls for user manually switching scenes. default=switch
+  controls?:
+  // | 'select'  not implemented yet
+  | 'switch'
+  | ((input: Pick<SceneUiControlsInput, 'setScene' | 'activeScene'>) => void)
   /** on activate hook */
   onActivate?: (sceneMeta: ParsedSceneMeta) => void
   /** on init hook */
@@ -47,6 +55,7 @@ export function sceneController(
   options: SceneControllerOptions = {},
 ) {
   const {
+    controls = 'switch',
     onActivate,
     onInit,
     onOff,
@@ -55,7 +64,8 @@ export function sceneController(
 
   const {
     ctx,
-    name,
+    id,
+    areaName = id,
     conditions = [],
     definitions,
     off: defaultOff,
@@ -63,16 +73,11 @@ export function sceneController(
     triggers,
   } = input
 
-  const scenes = new Map<string, SceneDef>()
-
-  definitions.forEach(scene => scenes.set(scene.name, scene))
-
-  if (scenes.size === 0)
-    throw new Error(`[SCENE CONTROLLER] Error: No scene definitions.`)
+  const scenes = _generateScenes()
 
   const state = ctx.synapse.sensor<{ state: 'active' | 'idle' }>({
     context: ctx.context,
-    name: `${name} Scene State`,
+    name: `${areaName} Scene State`,
     state: {
       onUpdate: triggers,
       current: () => {
@@ -91,14 +96,15 @@ export function sceneController(
 
   const activeScene = ctx.synapse.sensor<{ state: string }>({
     context: ctx.context,
-    name: `${name} Scene Controller`,
+    name: `${id} Scene Controller`,
     state: 'default',
     options: [...scenes.keys()] as const,
   })
 
   sceneUiControls({
     ctx,
-    entityType: 'switch',
+    areaName,
+    controls,
     scenes,
     // @ts-expect-error - not sure how to properly type a synapse sensor vs hass sensor
     activeScene,
@@ -169,13 +175,29 @@ export function sceneController(
     activeScene.state = id
   }
 
+  function _generateScenes() {
+    const scenes = new Map<string, SceneDef>()
+
+    objectEntries(definitions).forEach(([id, def]) => scenes.set(id, def))
+
+    if (scenes.size === 0) {
+
+      throw new InternalError(
+        ctx.context,
+        `[SCENE CONTROLLER][${id.toUpperCase()}]`,
+        'No scene definitions.')
+    }
+
+    return scenes
+  }
+
   function _getSceneDef(id: string) {
     const sceneMeta = scenes.get(id)
 
     if (!sceneMeta) {
       throw new InternalError(
         ctx.context,
-        `[SCENE CONTROLLER][${name.toUpperCase()}][GET META]`,
+        `[SCENE CONTROLLER][${id.toUpperCase()}][GET META]`,
         `Scene meta does not exist for: ${activeScene.state}`,
       )
     }
@@ -197,7 +219,15 @@ export function sceneController(
 
 interface SceneUiControlsInput {
   ctx: TServiceParams
-  entityType: 'switch' | 'select'
+  areaName: string
+  // ui controls for user manually switching scenes. default=switch
+  controls?:
+  | 'switch'
+  // | 'select'  not implemented yet
+  | ((input: { ctx: TServiceParams } & Pick<
+    SceneUiControlsInput,
+    'setScene' | 'activeScene'
+  >) => void)
   scenes: Scenes
   activeScene: ByIdProxy<PICK_ENTITY<'sensor'>>
   setScene: (name: string) => void
@@ -205,12 +235,21 @@ interface SceneUiControlsInput {
 
 // handle ui - user inputs & ui state logic
 function sceneUiControls(input: SceneUiControlsInput) {
-  const { ctx, entityType, scenes, activeScene, setScene } = input
-  const defaultSceneName = _getDefaultScene()
+  const { ctx, areaName, controls, scenes, activeScene, setScene } = input
+
+  const defaultSceneId = _getDefaultScene()
 
   function _generateUiControls() {
-    if (entityType === 'switch')
-      sceneSwitchUi({ ctx, scenes, activeScene, defaultSceneName, setScene })
+    if (typeof controls === 'function') {
+      controls({ ctx, setScene, activeScene })
+      return
+    }
+
+    if (controls === 'switch')
+      sceneSwitchUi({ ctx, areaName, scenes, activeScene, defaultSceneId, setScene })
+
+
+    // TODO: add select control
   }
 
   function _getDefaultScene() {
@@ -237,22 +276,25 @@ function sceneUiControls(input: SceneUiControlsInput) {
 
 function sceneSwitchUi(input: {
   ctx: Pick<TServiceParams, 'context' | 'synapse' | 'hass'>
+  areaName: string
   scenes: Scenes
   activeScene: ByIdProxy<PICK_ENTITY<'sensor'>>
-  defaultSceneName: string
+  defaultSceneId: string
   setScene: (name: string) => void
 }) {
-  const { ctx, scenes, activeScene, defaultSceneName, setScene } = input
+  const { ctx, areaName, scenes, activeScene, defaultSceneId, setScene } = input
+
   const switches = [...scenes.entries()].reduce(
     (switches, [id, sceneMeta]) => {
       switches.push(
         generateSwitch({
           ctx,
-          name: id,
+          id,
+          sceneName: `${areaName} ${sceneMeta?.friendlyName ?? id}`,
           icon: sceneMeta.icon,
           isDefault: sceneMeta.isDefault,
           activeScene,
-          defaultSceneName,
+          defaultSceneId: defaultSceneId,
           setScene,
         }),
       )
@@ -266,42 +308,38 @@ function sceneSwitchUi(input: {
 }
 
 function generateSwitch(
-  input: Pick<SceneDef, 'name' | 'isDefault' | 'icon'> & {
+  input: Pick<SceneDef, 'id' | 'isDefault' | 'icon'> & {
     ctx: Pick<TServiceParams, 'context' | 'synapse'>
+    sceneName: string
     activeScene: ByIdProxy<PICK_ENTITY<'sensor'>>
-    defaultSceneName: string
+    defaultSceneId: string
     setScene: (name: string) => void
   },
 ) {
   const {
     ctx,
-    name,
+    id,
+    sceneName,
     icon = 'mdi:lightbulb-group',
     isDefault,
     activeScene,
-    defaultSceneName,
+    defaultSceneId,
     setScene,
   } = input
 
   const switchEntity = ctx.synapse.switch({
-    name,
+    name: `${sceneName} Switch`,
     icon,
     device_class: 'switch',
     context: ctx.context,
     is_on: {
       onUpdate: [activeScene],
-      current: () => {
-        if (activeScene.state === name)
-          return true
-
-        if (activeScene.state !== name)
-          return false
-      },
+      current: () => activeScene.state === id,
     },
-    turn_on: () => setScene(name),
+    turn_on: () => setScene(id),
     turn_off: () => {
       if (!isDefault)
-        setScene(defaultSceneName)
+        setScene(defaultSceneId)
     },
   })
 
