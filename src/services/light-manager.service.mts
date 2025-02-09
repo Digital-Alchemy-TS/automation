@@ -3,7 +3,6 @@ import {
   DOWN,
   each,
   eachLimit,
-  is,
   NONE,
   sleep,
   TServiceParams,
@@ -61,6 +60,9 @@ export function LightManager({
   hass,
   scheduler,
   lifecycle,
+  internal: {
+    utils: { is },
+  },
   automation,
   config,
 }: TServiceParams) {

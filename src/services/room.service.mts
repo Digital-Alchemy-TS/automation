@@ -3,7 +3,6 @@ import {
   eachSeries,
   FIRST,
   InternalError,
-  is,
   TServiceParams,
   VALUE,
 } from "@digital-alchemy/core";
@@ -42,6 +41,9 @@ export function Room({
   logger,
   hass,
   synapse,
+  internal: {
+    utils: { is },
+  },
   scheduler,
   automation,
   context: parentContext,
@@ -51,7 +53,7 @@ export function Room({
     context,
     scenes,
   }: RoomConfiguration<SCENES, ROOM>): RoomDefinition<SCENES> {
-    logger.info({ name }, `create room`);
+    logger.debug({ name }, `create room`);
     const SCENE_LIST = Object.keys(scenes) as SCENES[];
 
     const sensorName = `${name} current scene`;

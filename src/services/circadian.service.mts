@@ -40,6 +40,14 @@ export function CircadianLighting({
 
   event.on(LOCATION_UPDATED, () => updateKelvin());
 
+  function getKelvin() {
+    const offset = getColorOffset();
+    return Math.floor(
+      (config.automation.CIRCADIAN_MAX_TEMP - config.automation.CIRCADIAN_MIN_TEMP) * offset +
+        config.automation.CIRCADIAN_MIN_TEMP,
+    );
+  }
+
   function updateKelvin() {
     if (!circadianEntity) {
       return;
@@ -48,14 +56,7 @@ export function CircadianLighting({
       logger.debug({ name: updateKelvin }, `lat/long not loaded yet`);
       return;
     }
-    const offset = getColorOffset();
-    circadianEntity.storage.set(
-      "state",
-      Math.floor(
-        (config.automation.CIRCADIAN_MAX_TEMP - config.automation.CIRCADIAN_MIN_TEMP) * offset +
-          config.automation.CIRCADIAN_MIN_TEMP,
-      ),
-    );
+    circadianEntity.storage.set("state", getKelvin());
   }
 
   /**
@@ -90,7 +91,7 @@ export function CircadianLighting({
 
   const out = {
     circadianEntity,
-    getKelvin: () => Number(circadianEntity?.storage.get("state")),
+    getKelvin,
     updateKelvin,
   };
   return out;

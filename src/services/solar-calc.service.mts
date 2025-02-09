@@ -1,4 +1,4 @@
-import { CronExpression, is, TBlackHole, TServiceParams } from "@digital-alchemy/core";
+import { CronExpression, TBlackHole, TServiceParams } from "@digital-alchemy/core";
 import { HassConfig } from "@digital-alchemy/hass";
 import dayjs, { Dayjs } from "dayjs";
 import { Duration, DurationUnitsObjectType, DurationUnitType } from "dayjs/plugin/duration";
@@ -79,7 +79,15 @@ type SolarReference = Record<SolarEvents, Dayjs> & {
 /**
  * Benefits from a persistent cache, like Redis
  */
-export function SolarCalculator({ logger, scheduler, hass, lifecycle }: TServiceParams) {
+export function SolarCalculator({
+  logger,
+  scheduler,
+  hass,
+  lifecycle,
+  internal: {
+    utils: { is },
+  },
+}: TServiceParams) {
   let config: HassConfig;
   const event = new EventEmitter();
   event.setMaxListeners(UNLIMITED);
