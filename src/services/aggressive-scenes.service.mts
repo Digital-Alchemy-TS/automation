@@ -1,4 +1,4 @@
-import { each, is, TContext, TServiceParams } from "@digital-alchemy/core";
+import { each, TContext, TServiceParams } from "@digital-alchemy/core";
 import { domain, ENTITY_STATE, PICK_ENTITY, PICK_FROM_AREA, TAreaId } from "@digital-alchemy/hass";
 
 import {
@@ -16,7 +16,16 @@ type TValidateOptions<ROOM extends TAreaId> = {
   scene: RoomScene<ROOM>;
 };
 
-export function AggressiveScenes({ logger, config, hass, event, automation }: TServiceParams) {
+export function AggressiveScenes({
+  internal: {
+    utils: { is },
+  },
+  logger,
+  config,
+  hass,
+  event,
+  automation,
+}: TServiceParams) {
   async function manageSwitch<ROOM extends TAreaId, SCENE extends SceneDefinition<ROOM>>(
     entity: ENTITY_STATE<PICK_FROM_AREA<ROOM, "switch">>,
     scene: SCENE,

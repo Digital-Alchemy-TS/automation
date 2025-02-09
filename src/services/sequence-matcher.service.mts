@@ -1,8 +1,9 @@
-import { is, sleep, START, TServiceParams } from "@digital-alchemy/core";
+import { sleep, START, TServiceParams } from "@digital-alchemy/core";
 
 import { ActiveWatcher, GenericFilter, SequenceWatchOptions, TrackedOptions } from "../index.mts";
 
 export function SequenceWatcher({ logger, hass, config, internal }: TServiceParams) {
+  const { is } = internal.utils;
   const ACTIVE = new Map<object, ActiveWatcher>();
   const WATCHED_EVENTS = new Map<string, TrackedOptions[]>();
   const EVENT_REMOVAL = new Map<string, () => void>();
