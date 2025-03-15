@@ -2,9 +2,9 @@ import { TContext } from "@digital-alchemy/core";
 import {
   ALL_DOMAINS,
   GetDomain,
+  HassAreaMapping,
   PICK_ENTITY,
   PICK_FROM_AREA,
-  REGISTRY_SETUP,
   TAreaId,
 } from "@digital-alchemy/hass";
 
@@ -121,5 +121,5 @@ export type RoomScene<
    * Human understandable description of this scene (short form)
    */
   friendly_name?: string;
-  definition: REGISTRY_SETUP["area"][`_${AREA}`] extends never ? never : DEFINITION;
+  definition: HassAreaMapping[`_${AREA}`] extends never ? never : DEFINITION;
 };

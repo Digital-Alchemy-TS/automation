@@ -210,7 +210,6 @@ export function LightManager({
       type = "light_on_off";
     } else if (stateTests.brightness) {
       type = "light_brightness";
-      // eslint-disable-next-line unicorn/no-negated-condition
     } else if (!stateTests.color) {
       type = "light_color";
     } else {
