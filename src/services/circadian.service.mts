@@ -25,6 +25,7 @@ export function CircadianLighting({
     }
     circadianEntity = synapse.sensor({
       context,
+      // @ts-expect-error issue in synapse
       device_class: "temperature",
       icon: "mdi:sun-thermometer",
       name: config.automation.CIRCADIAN_SENSOR_NAME,
