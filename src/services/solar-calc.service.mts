@@ -1,4 +1,4 @@
-import { CronExpression, TBlackHole, TServiceParams } from "@digital-alchemy/core";
+import { CronExpression, SINGLE, sleep, TBlackHole, TServiceParams } from "@digital-alchemy/core";
 import { HassConfig } from "@digital-alchemy/hass";
 import dayjs, { Dayjs } from "dayjs";
 import { Duration, DurationUnitsObjectType, DurationUnitType } from "dayjs/plugin/duration";
@@ -72,6 +72,8 @@ type OnSolarEvent = {
 
 type SolarReference = Record<SolarEvents, Dayjs> & {
   isBetween: (a: SolarEvents, b: SolarEvents) => boolean;
+  isBefore: (event: SolarEvents) => boolean;
+  isAfter: (event: SolarEvents) => boolean;
   loaded: boolean;
   onEvent: (options: OnSolarEvent) => { remove: () => TBlackHole };
 };
@@ -174,6 +176,16 @@ export function SolarCalculator({
     return now.isBetween(solarReference[a], solarReference[b]);
   };
 
+  solarReference.isBefore = (event: SolarEvents) => {
+    const now = dayjs();
+    return now.isBefore(solarReference[event]);
+  };
+
+  solarReference.isAfter = (event: SolarEvents) => {
+    const now = dayjs();
+    return now.isAfter(solarReference[event]);
+  };
+
   function getNextTime(eventName: SolarEvents, offset: TOffset, label: string) {
     let duration: Duration;
     // * if function, unwrap
@@ -203,10 +215,30 @@ export function SolarCalculator({
   }
 
   solarReference.onEvent = ({ eventName, label, exec, offset }: OnSolarEvent) => {
-    const remove = scheduler.sliding({
-      exec: async () => await exec(),
-      next: () => getNextTime(eventName, offset, label),
-      reset: CronExpression.EVERY_DAY_AT_MIDNIGHT,
+    async function run() {
+      const nextTrigger = getNextTime(eventName, offset, label);
+      const logData = {
+        eventName,
+        label,
+        nextTime: nextTrigger.toDate().toLocaleString(),
+        offset,
+      };
+      if (nextTrigger.isAfter(dayjs().startOf("hour").add(SINGLE, "hour"))) {
+        logger.trace(logData, "solar trigger  not soon");
+        return;
+      }
+      logger.trace(logData, "scheduling solar trigger soon");
+      await sleep(nextTrigger.toDate());
+      logger.debug(logData, "triggering event");
+      await exec();
+    }
+    // check at boot
+    lifecycle.onReady(async () => await run());
+
+    // recheck every hour
+    const remove = scheduler.cron({
+      exec: async () => await run(),
+      schedule: CronExpression.EVERY_HOUR,
     });
     return { remove };
   };
