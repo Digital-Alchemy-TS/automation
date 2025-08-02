@@ -224,7 +224,7 @@ export function SolarCalculator({
         offset,
       };
       if (nextTrigger.isAfter(dayjs().startOf("hour").add(SINGLE, "hour"))) {
-        logger.trace(logData, "solar trigger  not soon");
+        logger.trace(logData, "solar trigger not soon");
         return;
       }
       logger.trace(logData, "scheduling solar trigger soon");
