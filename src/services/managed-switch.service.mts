@@ -2,15 +2,10 @@ import { CronExpression, SINGLE, TContext, TServiceParams } from "@digital-alche
 
 import { ManagedSwitchOptions, PickASwitch } from "../helpers/index.mts";
 
-export function ManagedSwitch({
-  logger,
-  hass,
-  scheduler,
-  lifecycle,
-  internal: {
+export function ManagedSwitch({ logger, hass, scheduler, lifecycle, internal }: TServiceParams) {
+  const {
     utils: { is },
-  },
-}: TServiceParams) {
+  } = internal;
   /**
    * Logic runner for the state enforcer
    */
@@ -59,6 +54,10 @@ export function ManagedSwitch({
 
       // * Check if there should be a change
       const update = async () => {
+        if (internal.boot.phase === "teardown") {
+          logger.debug(`skipping managed_switch trigger during teardown`);
+          return;
+        }
         const expected = shouldBeOn();
         if (!is.boolean(expected)) {
           if (!is.undefined(expected)) {
