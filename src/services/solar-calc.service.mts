@@ -223,6 +223,10 @@ export function SolarCalculator({
         nextTime: nextTrigger.toDate().toLocaleString(),
         offset,
       };
+      if (nextTrigger.isBefore(dayjs())) {
+        logger.trace(logData, "trigger already occurred");
+        return;
+      }
       if (nextTrigger.isAfter(dayjs().startOf("hour").add(SINGLE, "hour"))) {
         logger.trace(logData, "solar trigger not soon");
         return;
