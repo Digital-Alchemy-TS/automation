@@ -3,7 +3,7 @@
   "name": "@digital-alchemy/automation",
   "repository": "https://github.com/Digital-Alchemy-TS/automation",
   "homepage": "https://docs.digital-alchemy.app/Automation",
-  "version": "25.8.3",
+  "version": "25.8.4-beta.0",
   "scripts": {
     "build": "rm -rf dist/; tsc",
     "lint": "eslint src",
