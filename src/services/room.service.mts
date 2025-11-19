@@ -97,6 +97,7 @@ export function Room({
         {}) as RoomScene<ROOM>;
       const definition = current.definition;
       if (entity_id in definition) {
+        // @ts-expect-error fixme
         const state = definition[entity_id] as SceneLightState;
         return Object.keys(state).every(i => ["state", "brightness"].includes(i));
       }

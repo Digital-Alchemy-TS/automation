@@ -127,18 +127,13 @@ export function LightManager({
   }
 
   function getCurrentDiff({ attributes }: ColorLight | ByIdProxy<PICK_ENTITY<"light">>) {
-    if (!attributes.supported_color_modes.includes("color_temp")) {
+    const a = attributes as ColorLight["attributes"];
+    if (!a.supported_color_modes.includes("color_temp")) {
       return NONE;
     }
-    const min = Math.max(
-      config.automation.CIRCADIAN_MIN_TEMP,
-      attributes.min_color_temp_kelvin ?? NONE,
-    );
-    const max = Math.min(
-      config.automation.CIRCADIAN_MAX_TEMP,
-      attributes.max_color_temp_kelvin ?? NONE,
-    );
-    const kelvin = attributes.color_temp_kelvin;
+    const min = Math.max(config.automation.CIRCADIAN_MIN_TEMP, a.min_color_temp_kelvin ?? NONE);
+    const max = Math.min(config.automation.CIRCADIAN_MAX_TEMP, a.max_color_temp_kelvin ?? NONE);
+    const kelvin = a.color_temp_kelvin;
     const target = Math.min(max, Math.max(automation.circadian.getKelvin(), min));
     return Math.abs(kelvin - target);
   }
