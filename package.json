@@ -32,8 +32,8 @@
   },
   "devDependencies": {
     "@cspell/eslint-plugin": "^9.3.2",
-    "@digital-alchemy/core": "^25.11.19",
-    "@digital-alchemy/hass": "^25.11.16",
+    "@digital-alchemy/core": "^25.11.23",
+    "@digital-alchemy/hass": "^25.11.23",
     "@digital-alchemy/synapse": "^25.8.21",
     "@eslint/compat": "^2.0.0",
     "@eslint/eslintrc": "^3.3.1",
@@ -57,7 +57,7 @@
     "tsx": "^4.20.6",
     "type-fest": "^5.2.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.10"
+    "vitest": "^4.0.13"
   },
   "packageManager": "yarn@4.11.0"
 }
