@@ -31,18 +31,18 @@
     "dayjs": "^1"
   },
   "devDependencies": {
-    "@cspell/eslint-plugin": "^9.3.2",
-    "@digital-alchemy/core": "^25.11.19",
-    "@digital-alchemy/hass": "^25.11.16",
+    "@cspell/eslint-plugin": "^9.4.0",
+    "@digital-alchemy/core": "^25.12.8",
+    "@digital-alchemy/hass": "^25.11.27",
     "@digital-alchemy/synapse": "^25.8.21",
     "@eslint/compat": "^2.0.0",
-    "@eslint/eslintrc": "^3.3.1",
-    "@eslint/js": "^9.39.1",
+    "@eslint/eslintrc": "^3.3.3",
+    "@eslint/js": "^9.39.2",
     "@types/node": "^24.10.1",
-    "@typescript-eslint/eslint-plugin": "8.47.0",
-    "@typescript-eslint/parser": "8.47.0",
+    "@typescript-eslint/eslint-plugin": "8.49.0",
+    "@typescript-eslint/parser": "8.49.0",
     "dayjs": "^1.11.19",
-    "eslint": "9.39.1",
+    "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsonc": "^2.21.0",
@@ -53,11 +53,11 @@
     "eslint-plugin-sonarjs": "^3.0.5",
     "eslint-plugin-sort-keys-fix": "^1.1.2",
     "eslint-plugin-unicorn": "^62.0.0",
-    "prettier": "^3.6.2",
-    "tsx": "^4.20.6",
-    "type-fest": "^5.2.0",
+    "prettier": "^3.7.4",
+    "tsx": "^4.21.0",
+    "type-fest": "^5.3.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.10"
+    "vitest": "^4.0.15"
   },
   "packageManager": "yarn@4.11.0"
 }
