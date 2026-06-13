@@ -334,8 +334,8 @@ export function LightManager({
           }
           logger.trace({ diff, name: "onPostConfig" }, `{%s} adjusting light temperature`, light);
           await hass.call.light.turn_on({
+            color_temp_kelvin: automation.circadian.getKelvin(),
             entity_id: light,
-            kelvin: automation.circadian.getKelvin(),
           });
           complete++;
           await sleep(config.automation.CIRCADIAN_THROTTLE);

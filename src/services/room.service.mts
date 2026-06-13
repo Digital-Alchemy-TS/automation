@@ -156,8 +156,8 @@ export function Room({
               const change = lights[entity_id];
               await hass.call.light.turn_on({
                 brightness: change.brightness,
+                color_temp_kelvin: change.kelvin,
                 entity_id,
-                kelvin: change.kelvin,
               });
             },
           );
