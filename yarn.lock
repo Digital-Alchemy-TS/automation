@@ -630,7 +630,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@digital-alchemy/core@npm:^26.5.30":
+"@digital-alchemy/core@npm:26.5.30":
   version: 26.5.30
   resolution: "@digital-alchemy/core@npm:26.5.30"
   dependencies:
@@ -646,9 +646,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@digital-alchemy/hass@npm:^26.6.13":
-  version: 26.6.13
-  resolution: "@digital-alchemy/hass@npm:26.6.13"
+"@digital-alchemy/hass@portal:/repos/DigitalAlchemyTS/hass::locator=%40digital-alchemy%2Fautomation%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@digital-alchemy/hass@portal:/repos/DigitalAlchemyTS/hass::locator=%40digital-alchemy%2Fautomation%40workspace%3A."
   dependencies:
     dayjs: "npm:^1.11.21"
     semver: "npm:^7.8.4"
@@ -658,14 +658,13 @@ __metadata:
   peerDependencies:
     "@digital-alchemy/core": "*"
   bin:
-    mock-assistant: scripts/mock-assistant.sh
-  checksum: 10/75cb24810fc8d42dbeafcb13b724d95158f24e784d56aa547b5477c5ff829ed875469a28b83576f5cdd9066bb1503c74bd15424f878cc5c30843504e3f80a45c
+    mock-assistant: ./scripts/mock-assistant.sh
   languageName: node
-  linkType: hard
+  linkType: soft
 
-"@digital-alchemy/synapse@npm:^26.2.6":
-  version: 26.2.6
-  resolution: "@digital-alchemy/synapse@npm:26.2.6"
+"@digital-alchemy/synapse@portal:/repos/DigitalAlchemyTS/synapse::locator=%40digital-alchemy%2Fautomation%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@digital-alchemy/synapse@portal:/repos/DigitalAlchemyTS/synapse::locator=%40digital-alchemy%2Fautomation%40workspace%3A."
   dependencies:
     better-sqlite3: "npm:^12.6.0"
     drizzle-orm: "npm:^0.45.1"
@@ -676,9 +675,8 @@ __metadata:
     "@digital-alchemy/hass": "*"
     dayjs: "*"
     uuid: "*"
-  checksum: 10/5f639e2ba05fd6bd33a780bd541294740241c415839babd8f1bfc3ff979979741cfa7ebd7dcf90df4260f9c3bea61021fc98bef7c6fcd5a24a74a4807eaaf114
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@dotenvx/dotenvx@npm:^1.69.1":
   version: 1.71.3

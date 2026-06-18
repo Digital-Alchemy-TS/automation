@@ -20,7 +20,7 @@
     "noUncheckedIndexedAccess": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "types": ["node"],
+    "types": ["node", "vitest/globals"],
     "strict": false,
     "strictBindCallApply": true,
     "rewriteRelativeImportExtensions": true,

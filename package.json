@@ -6,9 +6,16 @@
   "version": "26.6.13",
   "scripts": {
     "build": "rm -rf dist/; tsc",
-    "lint": "eslint src",
+    "lint": "eslint src && echo \"✓ lint passed\"",
+    "test": "vitest --no-file-parallelism",
+    "type-check": "tsc --noEmit && echo \"✓ type-check passed\"",
     "prepublishOnly": "npm run build",
     "upgrade": "ncu --upgrade && truncate -s 0 yarn.lock && yarn install"
+  },
+  "resolutions": {
+    "@digital-alchemy/hass": "portal:/repos/DigitalAlchemyTS/hass",
+    "@digital-alchemy/synapse": "portal:/repos/DigitalAlchemyTS/synapse",
+    "@digital-alchemy/core": "26.5.30"
   },
   "author": {
     "url": "https://github.com/zoe-codez",
