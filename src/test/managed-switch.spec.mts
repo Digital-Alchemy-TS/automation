@@ -13,12 +13,17 @@
  *   - When the switch is already in the correct state, no service call is made.
  *   - When `shouldBeOn()` returns `undefined`, no service call is made.
  *   - During teardown the cron tick is ignored (boot.phase check).
+ *
+ * Boot-ordering: `hass.call.switch` is a lazy proxy populated during
+ * `hass.call`'s own `onBootstrap`. Assigning spies onto it (or advancing the
+ * cron clock) MUST happen inside `lifecycle.onReady`, which fires after ALL
+ * `onBootstrap` handlers complete.
  */
-
-import { CronExpression, MINUTE } from "@digital-alchemy/core";
 
 // Register test entity IDs into HassEntitySetupMapping
 import "./test-types.mts";
+
+import { CronExpression, MINUTE } from "@digital-alchemy/core";
 
 import { automationTestRunner } from "../mock/automation-test-runner.mts";
 
@@ -53,23 +58,26 @@ describe("ManagedSwitch — turn_on enforcement", () => {
     const turnOnSpy = vi.fn().mockResolvedValue(undefined);
     const turnOffSpy = vi.fn().mockResolvedValue(undefined);
 
-    await automationTestRunner.run(async ({ automation, hass, mock_assistant, context }) => {
-      // Seed the entity state as "off"
-      mock_assistant.entity.register(TEST_SWITCH, { state: "off" });
+    await automationTestRunner.run(
+      async ({ automation, hass, mock_assistant, context, lifecycle }) => {
+        // Seed the entity state as "off"
+        mock_assistant.entity.register(TEST_SWITCH, { state: "off" });
 
-      // Intercept service calls
-      hass.call.switch.turn_on = turnOnSpy;
-      hass.call.switch.turn_off = turnOffSpy;
+        automation.managed_switch({
+          context,
+          entity_id: TEST_SWITCH,
+          schedule: EVERY_MINUTE,
+          shouldBeOn: () => true,
+        });
 
-      automation.managed_switch({
-        context,
-        entity_id: TEST_SWITCH,
-        schedule: EVERY_MINUTE,
-        shouldBeOn: () => true,
-      });
-
-      await advanceOneTick();
-    });
+        // hass.call.switch is populated after onBootstrap; assign spies in onReady
+        lifecycle.onReady(async () => {
+          hass.call.switch.turn_on = turnOnSpy;
+          hass.call.switch.turn_off = turnOffSpy;
+          await advanceOneTick();
+        });
+      },
+    );
 
     expect(turnOnSpy).toHaveBeenCalledWith({ entity_id: [TEST_SWITCH] });
     expect(turnOffSpy).not.toHaveBeenCalled();
@@ -80,21 +88,24 @@ describe("ManagedSwitch — turn_on enforcement", () => {
     const turnOnSpy = vi.fn().mockResolvedValue(undefined);
     const turnOffSpy = vi.fn().mockResolvedValue(undefined);
 
-    await automationTestRunner.run(async ({ automation, hass, mock_assistant, context }) => {
-      mock_assistant.entity.register(TEST_SWITCH, { state: "on" });
+    await automationTestRunner.run(
+      async ({ automation, hass, mock_assistant, context, lifecycle }) => {
+        mock_assistant.entity.register(TEST_SWITCH, { state: "on" });
 
-      hass.call.switch.turn_on = turnOnSpy;
-      hass.call.switch.turn_off = turnOffSpy;
+        automation.managed_switch({
+          context,
+          entity_id: TEST_SWITCH,
+          schedule: EVERY_MINUTE,
+          shouldBeOn: () => false,
+        });
 
-      automation.managed_switch({
-        context,
-        entity_id: TEST_SWITCH,
-        schedule: EVERY_MINUTE,
-        shouldBeOn: () => false,
-      });
-
-      await advanceOneTick();
-    });
+        lifecycle.onReady(async () => {
+          hass.call.switch.turn_on = turnOnSpy;
+          hass.call.switch.turn_off = turnOffSpy;
+          await advanceOneTick();
+        });
+      },
+    );
 
     expect(turnOffSpy).toHaveBeenCalledWith({ entity_id: [TEST_SWITCH] });
     expect(turnOnSpy).not.toHaveBeenCalled();
@@ -112,19 +123,23 @@ describe("ManagedSwitch — no-op when already in correct state", () => {
     vi.useFakeTimers();
     const turnOnSpy = vi.fn().mockResolvedValue(undefined);
 
-    await automationTestRunner.run(async ({ automation, hass, mock_assistant, context }) => {
-      mock_assistant.entity.register(TEST_SWITCH, { state: "on" });
-      hass.call.switch.turn_on = turnOnSpy;
+    await automationTestRunner.run(
+      async ({ automation, hass, mock_assistant, context, lifecycle }) => {
+        mock_assistant.entity.register(TEST_SWITCH, { state: "on" });
 
-      automation.managed_switch({
-        context,
-        entity_id: TEST_SWITCH,
-        schedule: EVERY_MINUTE,
-        shouldBeOn: () => true,
-      });
+        automation.managed_switch({
+          context,
+          entity_id: TEST_SWITCH,
+          schedule: EVERY_MINUTE,
+          shouldBeOn: () => true,
+        });
 
-      await advanceOneTick();
-    });
+        lifecycle.onReady(async () => {
+          hass.call.switch.turn_on = turnOnSpy;
+          await advanceOneTick();
+        });
+      },
+    );
 
     expect(turnOnSpy).not.toHaveBeenCalled();
   });
@@ -133,19 +148,23 @@ describe("ManagedSwitch — no-op when already in correct state", () => {
     vi.useFakeTimers();
     const turnOffSpy = vi.fn().mockResolvedValue(undefined);
 
-    await automationTestRunner.run(async ({ automation, hass, mock_assistant, context }) => {
-      mock_assistant.entity.register(TEST_SWITCH, { state: "off" });
-      hass.call.switch.turn_off = turnOffSpy;
+    await automationTestRunner.run(
+      async ({ automation, hass, mock_assistant, context, lifecycle }) => {
+        mock_assistant.entity.register(TEST_SWITCH, { state: "off" });
 
-      automation.managed_switch({
-        context,
-        entity_id: TEST_SWITCH,
-        schedule: EVERY_MINUTE,
-        shouldBeOn: () => false,
-      });
+        automation.managed_switch({
+          context,
+          entity_id: TEST_SWITCH,
+          schedule: EVERY_MINUTE,
+          shouldBeOn: () => false,
+        });
 
-      await advanceOneTick();
-    });
+        lifecycle.onReady(async () => {
+          hass.call.switch.turn_off = turnOffSpy;
+          await advanceOneTick();
+        });
+      },
+    );
 
     expect(turnOffSpy).not.toHaveBeenCalled();
   });
@@ -163,20 +182,24 @@ describe("ManagedSwitch — shouldBeOn undefined", () => {
     const turnOnSpy = vi.fn().mockResolvedValue(undefined);
     const turnOffSpy = vi.fn().mockResolvedValue(undefined);
 
-    await automationTestRunner.run(async ({ automation, hass, mock_assistant, context }) => {
-      mock_assistant.entity.register(TEST_SWITCH, { state: "off" });
-      hass.call.switch.turn_on = turnOnSpy;
-      hass.call.switch.turn_off = turnOffSpy;
+    await automationTestRunner.run(
+      async ({ automation, hass, mock_assistant, context, lifecycle }) => {
+        mock_assistant.entity.register(TEST_SWITCH, { state: "off" });
 
-      automation.managed_switch({
-        context,
-        entity_id: TEST_SWITCH,
-        schedule: EVERY_MINUTE,
-        shouldBeOn: () => undefined,
-      });
+        automation.managed_switch({
+          context,
+          entity_id: TEST_SWITCH,
+          schedule: EVERY_MINUTE,
+          shouldBeOn: () => undefined,
+        });
 
-      await advanceOneTick();
-    });
+        lifecycle.onReady(async () => {
+          hass.call.switch.turn_on = turnOnSpy;
+          hass.call.switch.turn_off = turnOffSpy;
+          await advanceOneTick();
+        });
+      },
+    );
 
     expect(turnOnSpy).not.toHaveBeenCalled();
     expect(turnOffSpy).not.toHaveBeenCalled();

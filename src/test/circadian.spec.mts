@@ -10,21 +10,32 @@
  *
  * Boot-ordering: `vi.useFakeTimers()` + `vi.setSystemTime()` BEFORE `run()`.
  * All HH:mm times are UTC; anchor to UTC midnight.
+ *
+ * Assertion-timing: solar reference times (`solarNoon`, `dawn`, `dusk`) are populated
+ * in `SolarCalculator.onBootstrap` which runs in parallel with the test callback's
+ * `onBootstrap`. All assertions that access solar properties MUST be deferred via
+ * `lifecycle.onReady`, which fires after ALL `onBootstrap` handlers complete.
  */
 
 import dayjs from "dayjs";
 
 import {
-  automationTestRunner,
   automationCircadianRunner,
-  CIRCADIAN_TEST_MIN_TEMP,
+  automationTestRunner,
   CIRCADIAN_TEST_MAX_TEMP,
+  CIRCADIAN_TEST_MIN_TEMP,
 } from "../mock/automation-test-runner.mts";
 
 // ─── Named constants ──────────────────────────────────────────────────────────
 
-/** UTC midnight anchor — before any solar event in any timezone */
-const ANCHOR_DATE = "2024-06-15T00:00:00.000Z";
+/**
+ * Anchor date: 10:00 UTC = 03:00 PDT on June 15.
+ * At this point SF is before sunrise (~12:47 UTC / 05:47 PDT),
+ * which means the solar algorithm computes June 15 events (not the previous day's).
+ * Using UTC midnight causes solar noon to fall before the anchor (yesterday's noon),
+ * producing negative tick values.
+ */
+const ANCHOR_DATE = "2024-06-15T10:00:00.000Z";
 /** San Francisco lat/long */
 const TEST_LATITUDE = 37.7749;
 const TEST_LONGITUDE = -122.4194;
@@ -44,9 +55,12 @@ describe("CircadianLighting — disabled by default", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(ANCHOR_DATE));
 
-    await automationTestRunner.run(({ automation, mock_assistant }) => {
+    await automationTestRunner.run(({ automation, mock_assistant, lifecycle }) => {
       mock_assistant.config.merge({ latitude: TEST_LATITUDE, longitude: TEST_LONGITUDE });
-      expect(automation.circadian.circadianEntity).toBeUndefined();
+      // circadianEntity is only populated in onPostConfig when CIRCADIAN_ENABLED=true
+      lifecycle.onReady(() => {
+        expect(automation.circadian.circadianEntity).toBeUndefined();
+      });
     });
   });
 });
@@ -62,10 +76,12 @@ describe("CircadianLighting — Kelvin at night (before dawn)", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(ANCHOR_DATE));
 
-    await automationCircadianRunner.run(({ automation, mock_assistant }) => {
+    await automationCircadianRunner.run(({ automation, mock_assistant, lifecycle }) => {
       mock_assistant.config.merge({ latitude: TEST_LATITUDE, longitude: TEST_LONGITUDE });
-      // UTC midnight is before SF dawn in any timezone
-      expect(automation.circadian.getKelvin()).toBe(CIRCADIAN_TEST_MIN_TEMP);
+      // UTC midnight is before SF dawn — offset = 0 → MIN_TEMP
+      lifecycle.onReady(() => {
+        expect(automation.circadian.getKelvin()).toBe(CIRCADIAN_TEST_MIN_TEMP);
+      });
     });
   });
 });
@@ -81,15 +97,17 @@ describe("CircadianLighting — Kelvin at solar noon", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(ANCHOR_DATE));
 
-    await automationCircadianRunner.run(async ({ automation, mock_assistant }) => {
+    await automationCircadianRunner.run(async ({ automation, mock_assistant, lifecycle }) => {
       mock_assistant.config.merge({ latitude: TEST_LATITUDE, longitude: TEST_LONGITUDE });
 
-      // Advance to solar noon
-      const solarNoonMs = automation.solar.solarNoon.diff(dayjs(new Date(ANCHOR_DATE)), "ms");
-      vi.advanceTimersByTime(solarNoonMs);
-      await Promise.resolve();
+      lifecycle.onReady(async () => {
+        // Advance to solar noon so offset is 1.0 → MAX_TEMP
+        const solarNoonMs = automation.solar.solarNoon.diff(dayjs(new Date(ANCHOR_DATE)), "ms");
+        vi.advanceTimersByTime(solarNoonMs);
+        await Promise.resolve();
 
-      expect(automation.circadian.getKelvin()).toBe(CIRCADIAN_TEST_MAX_TEMP);
+        expect(automation.circadian.getKelvin()).toBe(CIRCADIAN_TEST_MAX_TEMP);
+      });
     });
   }, 10_000);
 });
@@ -105,19 +123,21 @@ describe("CircadianLighting — Kelvin during morning", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(ANCHOR_DATE));
 
-    await automationCircadianRunner.run(async ({ automation, mock_assistant }) => {
+    await automationCircadianRunner.run(async ({ automation, mock_assistant, lifecycle }) => {
       mock_assistant.config.merge({ latitude: TEST_LATITUDE, longitude: TEST_LONGITUDE });
 
-      const { dawn, solarNoon } = automation.solar;
-      const dawnMs = dawn.diff(dayjs(new Date(ANCHOR_DATE)), "ms");
-      const midMorningMs = dawnMs + Math.floor(solarNoon.diff(dawn, "ms") / 2);
+      lifecycle.onReady(async () => {
+        const { dawn, solarNoon } = automation.solar;
+        const dawnMs = dawn.diff(dayjs(new Date(ANCHOR_DATE)), "ms");
+        const midMorningMs = dawnMs + Math.floor(solarNoon.diff(dawn, "ms") / 2);
 
-      vi.advanceTimersByTime(midMorningMs);
-      await Promise.resolve();
+        vi.advanceTimersByTime(midMorningMs);
+        await Promise.resolve();
 
-      const kelvin = automation.circadian.getKelvin();
-      expect(kelvin).toBeGreaterThan(CIRCADIAN_TEST_MIN_TEMP);
-      expect(kelvin).toBeLessThan(CIRCADIAN_TEST_MAX_TEMP);
+        const kelvin = automation.circadian.getKelvin();
+        expect(kelvin).toBeGreaterThan(CIRCADIAN_TEST_MIN_TEMP);
+        expect(kelvin).toBeLessThan(CIRCADIAN_TEST_MAX_TEMP);
+      });
     });
   }, 10_000);
 });
@@ -133,48 +153,45 @@ describe("CircadianLighting — updateKelvin writes to sensor storage", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(ANCHOR_DATE));
 
-    await automationCircadianRunner.run(async ({ automation, mock_assistant }) => {
+    await automationCircadianRunner.run(async ({ automation, mock_assistant, lifecycle }) => {
       mock_assistant.config.merge({ latitude: TEST_LATITUDE, longitude: TEST_LONGITUDE });
 
-      // Advance to solar noon so offset is 1.0 → MAX_TEMP
-      const solarNoonMs = automation.solar.solarNoon.diff(dayjs(new Date(ANCHOR_DATE)), "ms");
-      vi.advanceTimersByTime(solarNoonMs);
-      await Promise.resolve();
+      lifecycle.onReady(async () => {
+        // Advance to solar noon so offset is 1.0 → MAX_TEMP
+        const solarNoonMs = automation.solar.solarNoon.diff(dayjs(new Date(ANCHOR_DATE)), "ms");
+        vi.advanceTimersByTime(solarNoonMs);
+        await Promise.resolve();
 
-      automation.circadian.updateKelvin();
+        automation.circadian.updateKelvin();
 
-      expect(automation.circadian.circadianEntity?.storage.get("state")).toBe(
-        CIRCADIAN_TEST_MAX_TEMP,
-      );
+        expect(automation.circadian.circadianEntity?.storage.get("state")).toBe(
+          CIRCADIAN_TEST_MAX_TEMP,
+        );
+      });
     });
   }, 10_000);
 
-  it("cron tick triggers updateKelvin and updates the sensor state", async () => {
+  it("cron tick writes a value to sensor state after 30 seconds", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(ANCHOR_DATE));
-    let updateCallCount = 0;
 
-    await automationCircadianRunner.run(async ({ automation, mock_assistant }) => {
+    await automationCircadianRunner.run(async ({ automation, mock_assistant, lifecycle }) => {
       mock_assistant.config.merge({ latitude: TEST_LATITUDE, longitude: TEST_LONGITUDE });
 
-      // Advance to solar noon so we get a non-trivial value
-      const solarNoonMs = automation.solar.solarNoon.diff(dayjs(new Date(ANCHOR_DATE)), "ms");
-      vi.advanceTimersByTime(solarNoonMs);
-      await Promise.resolve();
+      lifecycle.onReady(async () => {
+        // Sensor storage should be undefined before the first cron tick
+        const before = automation.circadian.circadianEntity?.storage.get("state");
+        expect(before).toBeUndefined();
 
-      // Patch updateKelvin to observe invocations from the cron scheduler
-      const orig = automation.circadian.updateKelvin;
-      automation.circadian.updateKelvin = () => {
-        updateCallCount++;
-        orig();
-      };
+        // Advance past the 30-second cron boundary — triggers one updateKelvin() call.
+        // Use advanceTimersByTimeAsync to allow the async safeExec chain to settle.
+        await vi.advanceTimersByTimeAsync(THIRTY_ONE_SECONDS_MS);
 
-      // Advance past the 30-second cron boundary
-      vi.advanceTimersByTime(THIRTY_ONE_SECONDS_MS);
-      await Promise.resolve();
-      await Promise.resolve();
+        // After the cron tick the sensor state must be set to a valid Kelvin value
+        const after = automation.circadian.circadianEntity?.storage.get("state") as number;
+        expect(after).toBeGreaterThanOrEqual(CIRCADIAN_TEST_MIN_TEMP);
+        expect(after).toBeLessThanOrEqual(CIRCADIAN_TEST_MAX_TEMP);
+      });
     });
-
-    expect(updateCallCount).toBeGreaterThanOrEqual(1);
-  }, 15_000);
+  }, 10_000);
 });

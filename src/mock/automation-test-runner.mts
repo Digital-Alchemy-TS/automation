@@ -13,11 +13,11 @@ import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { createModule, CreateLibrary, TServiceParams } from "@digital-alchemy/core";
+import { CreateLibrary, createModule, TServiceParams } from "@digital-alchemy/core";
 import { LIB_HASS } from "@digital-alchemy/hass";
 import { LIB_MOCK_ASSISTANT } from "@digital-alchemy/hass/mock-assistant";
-import { LIB_MOCK_SYNAPSE } from "@digital-alchemy/synapse/mock";
 import { LIB_SYNAPSE } from "@digital-alchemy/synapse";
+import { LIB_MOCK_SYNAPSE } from "@digital-alchemy/synapse/mock";
 
 import { LIB_AUTOMATION } from "../automation.module.mts";
 
@@ -41,9 +41,7 @@ function resolveFixturesFile(): string {
   if (existsSync(synapseCandidate)) {
     return synapseCandidate;
   }
-  throw new Error(
-    `Could not locate fixtures.json. Tried:\n  ${candidate}\n  ${synapseCandidate}`,
-  );
+  throw new Error(`Could not locate fixtures.json. Tried:\n  ${candidate}\n  ${synapseCandidate}`);
 }
 
 const FIXTURES_FILE = resolveFixturesFile();
@@ -71,7 +69,7 @@ const SHARED_CONFIG = {
   boilerplate: { IS_TEST: true },
   mock_assistant: { FIXTURES_FILE },
   synapse: {
-    DATABASE_TYPE: "sqlite",
+    DATABASE_TYPE: "sqlite" as const,
     DATABASE_URL: ":memory:",
     EMIT_HEARTBEAT: false,
   },
